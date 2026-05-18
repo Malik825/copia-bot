@@ -131,7 +131,7 @@ export default function Dashboard() {
   ]);
 
   // Copy providers list matching Futures copy trading grid
-  const [providers, setProviders] = useState<VerifiedTrader[]>([
+  const [providers, setProviders] = useState<any[]>([
     {
       id: "prov-01",
       name: "Martin",
