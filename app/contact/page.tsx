@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Send, Terminal, Shield, MessageSquare, Mail, AlertTriangle, Check } from "lucide-react";
 
@@ -229,22 +230,20 @@ export default function Contact() {
             </h4>
 
             <div className="space-y-4">
-              <a
-                href="https://t.me/YOUR_BOT_LINK"
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                href="/admin"
                 className="flex items-start gap-4 p-4 border border-border bg-background/50 hover:border-primary rounded-lg transition-all"
               >
                 <div className="w-9 h-9 border border-border rounded-lg flex items-center justify-center text-primary shrink-0">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-mono text-xs font-bold text-foreground">Telegram Helpdesk</div>
+                  <div className="font-mono text-xs font-bold text-foreground">Console Helpdesk</div>
                   <div className="font-sans text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                    Access our dedicated Telegram bot wizard. Typical response time is under 10 minutes.
+                    Open a high-priority support ticket directly from your secure admin dashboard console.
                   </div>
                 </div>
-              </a>
+              </Link>
 
               <a
                 href="mailto:support@trufunder.com"

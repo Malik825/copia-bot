@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 /* ─────────────────────────────────────────────
@@ -231,12 +232,12 @@ export default function Home() {
             </p>
 
             <div className="flex gap-4 mt-8 flex-wrap animate-in fade-in slide-in-from-bottom-6 duration-800 delay-650 fill-mode-both">
-              <a
-                href="https://t.me/YOUR_BOT_LINK"
+              <Link
+                href="/signup"
                 className="font-mono text-xs tracking-[2px] uppercase bg-primary text-primary-foreground px-9 py-4 font-bold inline-flex items-center gap-2.5 hover:bg-gold-light hover:-translate-y-0.5 transition-all rounded-md shadow-lg"
               >
-                → Join on Telegram
-              </a>
+                → Get Started
+              </Link>
               <a
                 href="#products"
                 className="font-mono text-xs tracking-[2px] uppercase bg-transparent text-foreground border border-border px-9 py-4 inline-flex items-center gap-2.5 hover:border-primary hover:text-primary hover:-translate-y-0.5 transition-all rounded-md"
@@ -401,12 +402,12 @@ export default function Home() {
                   ))}
                 </ul>
 
-                <a
-                  href="https://t.me/YOUR_BOT_LINK"
+                <Link
+                  href="/signup"
                   className="font-mono text-[11px] tracking-[2px] uppercase text-primary inline-flex items-center gap-2 border-b border-gold-dim pb-1 hover:gap-3.5 hover:border-primary transition-all"
                 >
                   {product.cta}
-                </a>
+                </Link>
               </div>
             </Reveal>
           ))}
@@ -502,18 +503,18 @@ export default function Home() {
             Telegram and be live within minutes.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <a
-              href="https://t.me/YOUR_BOT_LINK"
+            <Link
+              href="/signup"
               className="font-mono text-xs tracking-[2px] uppercase bg-primary text-primary-foreground px-9 py-4 font-bold inline-flex items-center gap-2.5 hover:bg-gold-light hover:-translate-y-0.5 transition-all rounded-md"
             >
-              → Get Access on Telegram
-            </a>
-            <a
-              href="https://t.me/YOUR_CONTACT"
+              → Get Started Now
+            </Link>
+            <Link
+              href="/contact"
               className="font-mono text-xs tracking-[2px] uppercase bg-transparent text-foreground border border-border px-9 py-4 inline-flex items-center gap-2.5 hover:border-primary hover:text-primary hover:-translate-y-0.5 transition-all rounded-md"
             >
-              Contact Us
-            </a>
+              Contact Support
+            </Link>
           </div>
         </div>
       </section>
@@ -521,10 +522,10 @@ export default function Home() {
       {/* ── FOOTER ── */}
       <footer className="border-t border-border px-6 md:px-12 py-9 flex items-center justify-between flex-wrap gap-4">
         <div className="font-heading text-lg tracking-[3px] text-primary">
-          3IN1 TRADER
+          TRUFUNDER
         </div>
         <div className="font-mono text-[10px] tracking-[1px] text-muted-foreground">
-          © 2025 3IN1 Trader · Trading involves risk · Not financial advice
+          © 2026 TruFunder · Trading involves risk · Not financial advice
         </div>
       </footer>
     </>
