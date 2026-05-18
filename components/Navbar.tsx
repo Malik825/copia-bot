@@ -60,6 +60,13 @@ export default function Navbar() {
     router.push("/");
   };
 
+  const navLinks = [
+    { name: "About", href: "/about" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "Contact", href: "/contact" },
+    ...(isLoggedIn ? [{ name: "Dashboard", href: "/admin" }] : []),
+  ];
+
   return (
     <>
       <nav
@@ -87,53 +94,84 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Desktop Navigation Actions */}
-          <div className="hidden md:flex items-center gap-4">
-            
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 border border-border/80 bg-card hover:text-primary transition-all rounded-md cursor-pointer flex items-center justify-center text-muted-foreground outline-none focus:outline-none"
-              aria-label="Toggle Theme"
-            >
-              {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            </button>
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center gap-10">
+            <ul className="flex items-center gap-8">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <li key={link.name} className="relative group">
+                    <Link
+                      href={link.href}
+                      className={`font-mono text-[11px] tracking-[2px] uppercase transition-colors duration-300 relative py-1 ${
+                        isActive
+                          ? "text-primary font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {link.name}
+                      {/* Interactive slide underline */}
+                      <span
+                        className={`absolute bottom-0 left-0 right-0 h-px bg-primary transition-transform duration-300 origin-left ${
+                          isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                        }`}
+                      />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
 
-            {isLoggedIn ? (
-              <>
-                <button
-                  onClick={handleLogout}
-                  className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-red transition-colors py-1 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 outline-none"
-                >
-                  <LogOut className="w-3.5 h-3.5" /> Log Out
-                </button>
-                {pathname !== "/admin" && (
+            <span className="w-px h-4 bg-border" />
+
+            {/* Action CTA buttons */}
+            <div className="flex items-center gap-4">
+              
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 border border-border/80 bg-card hover:text-primary transition-all rounded-md cursor-pointer flex items-center justify-center text-muted-foreground outline-none focus:outline-none"
+                aria-label="Toggle Theme"
+              >
+                {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              </button>
+
+              {isLoggedIn ? (
+                <>
+                  <button
+                    onClick={handleLogout}
+                    className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-red transition-colors py-1 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 outline-none"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Log Out
+                  </button>
+                  {pathname !== "/admin" && (
+                    <Link
+                      href="/admin"
+                      className="font-mono text-[11px] tracking-[2px] uppercase bg-primary text-primary-foreground px-5 py-2.5 font-bold hover:bg-gold-light hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(201,168,76,0.12)] rounded-md"
+                    >
+                      Console <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  {pathname !== "/signin" && (
+                    <Link
+                      href="/signin"
+                      className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-foreground transition-colors py-1"
+                    >
+                      Sign In
+                    </Link>
+                  )}
                   <Link
-                    href="/admin"
+                    href="/signup"
                     className="font-mono text-[11px] tracking-[2px] uppercase bg-primary text-primary-foreground px-5 py-2.5 font-bold hover:bg-gold-light hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(201,168,76,0.12)] rounded-md"
                   >
-                    Console <ArrowRight className="w-3.5 h-3.5" />
+                    Get Started <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
-                )}
-              </>
-            ) : (
-              <>
-                {pathname !== "/signin" && (
-                  <Link
-                    href="/signin"
-                    className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-foreground transition-colors py-1"
-                  >
-                    Sign In
-                  </Link>
-                )}
-                <Link
-                  href="/signup"
-                  className="font-mono text-[11px] tracking-[2px] uppercase bg-primary text-primary-foreground px-5 py-2.5 font-bold hover:bg-gold-light hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(201,168,76,0.12)] rounded-md"
-                >
-                  Get Started <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Toggle Button */}
@@ -156,6 +194,26 @@ export default function Navbar() {
         }`}
       >
         <div className="flex flex-col gap-8">
+          <ul className="flex flex-col gap-6">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className={`font-heading text-4xl tracking-[2px] uppercase ${
+                      isActive ? "text-primary" : "text-foreground"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="w-full h-px bg-border" />
+
           <div className="flex flex-col gap-4">
             
             {/* Mobile Theme Toggle Button */}
