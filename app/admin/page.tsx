@@ -31,7 +31,9 @@ import {
   MessageSquare,
   Calendar,
   Bell,
-  BookOpen
+  BookOpen,
+  Menu,
+  X
 } from "lucide-react";
 import { verifyAndAdjustTradeSignal, RiskRules } from "@/lib/mirrorEngine";
 import { TradePosition, VerifiedTrader } from "@/lib/types";
@@ -177,6 +179,8 @@ export default function Dashboard() {
   ]);
 
   const [copiedProviders, setCopiedProviders] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dashboardView, setDashboardView] = useState<"default" | "box" | "wide" | "panel">("default");
   const [showApiModal, setShowApiModal] = useState(false);
   const [selectedExchange, setSelectedExchange] = useState("Binance");
   const [apiKey, setApiKey] = useState("");
@@ -217,7 +221,9 @@ export default function Dashboard() {
     setTheme(savedTheme);
     if (savedTheme === "light") {
       document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
     } else {
+      document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
     }
   }, [router]);
@@ -556,7 +562,9 @@ export default function Dashboard() {
     localStorage.setItem("theme", newTheme);
     if (newTheme === "light") {
       document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
     } else {
+      document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
     }
   };
@@ -586,21 +594,42 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans relative flex">
+    <div className="min-h-screen bg-background text-foreground font-sans relative flex overflow-hidden">
+
+      {/* ── Mobile Sidebar Overlay Backdrop ── */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+        />
+      )}
 
       {/* ── 1. LEFT STICKY SIDEBAR (JORDAN SMITH LOOK) ── */}
-      <aside className="w-64 border-r border-border bg-card flex flex-col justify-between p-6 fixed left-0 top-0 bottom-0 z-30 select-none">
+      <aside className={`w-64 border-r border-border bg-card flex flex-col justify-between p-6 fixed left-0 top-0 bottom-0 z-50 select-none transition-transform duration-300 md:translate-x-0 ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
         <div className="space-y-7">
           
           {/* Logo brand banner block */}
-          <div className="flex items-center gap-2.5 py-3.5 px-4 bg-[#1e4620] dark:bg-[#0c0c0c] border border-[#2d6a4f]/20 dark:border-border text-white rounded-md">
-            <div className="w-8 h-8 rounded-lg bg-white/10 dark:bg-primary/20 flex items-center justify-center font-bold text-lg text-primary-foreground dark:text-primary">
-              ▲
+          <div className="flex items-center justify-between py-3.5 px-4 bg-[#c9a84c] dark:bg-[#0c0c0c] border border-[#c9a84c]/20 dark:border-border text-white rounded-md">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-white/10 dark:bg-primary/20 flex items-center justify-center font-bold text-lg text-primary-foreground dark:text-primary">
+                ▲
+              </div>
+              <div>
+                <div className="font-mono text-xs font-black tracking-[2px] uppercase">TRUFUNDER</div>
+                <div className="font-mono text-[8px] tracking-[1px] text-white/50 dark:text-primary/70 uppercase">SMC Auto-Router</div>
+              </div>
             </div>
-            <div>
-              <div className="font-mono text-xs font-black tracking-[2px] uppercase">TRUFUNDER</div>
-              <div className="font-mono text-[8px] tracking-[1px] text-white/50 dark:text-primary/70 uppercase">SMC Auto-Router</div>
-            </div>
+            
+            {/* Mobile close button */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden text-white/80 hover:text-white transition-colors cursor-pointer outline-none"
+              aria-label="Close sidebar"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Profile Active User slot */}
@@ -630,10 +659,13 @@ export default function Dashboard() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveSubTab(tab.id)}
+                  onClick={() => {
+                    setActiveSubTab(tab.id);
+                    setSidebarOpen(false);
+                  }}
                   className={`flex items-center gap-3.5 px-4 py-3 rounded-md font-mono text-[10px] tracking-wider uppercase text-left transition-all outline-none cursor-pointer ${
                     isActive 
-                      ? "bg-[#1e4620]/10 dark:bg-primary/10 text-[#1e4620] dark:text-primary font-bold shadow-[inset_3px_0_0_#1e4620] dark:shadow-[inset_3px_0_0_#c9a84c]" 
+                      ? "bg-[#c9a84c]/10 dark:bg-primary/10 text-[#c9a84c] dark:text-primary font-bold shadow-[inset_3px_0_0_#c9a84c] dark:shadow-[inset_3px_0_0_#c9a84c]" 
                       : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                   }`}
                 >
@@ -650,12 +682,15 @@ export default function Dashboard() {
         <div className="space-y-5">
           
           {/* Promo offer box */}
-          <div className="bg-[#0c0c0c] border border-border p-4 text-center rounded-md">
-            <div className="text-[10px] font-sans text-white/90 leading-tight">
+          <div className="bg-muted/40 dark:bg-[#0c0c0c] border border-border p-4 text-center rounded-md">
+            <div className="text-[10px] font-sans text-foreground dark:text-white/90 leading-tight">
               Invite a friend and receive <strong className="text-primary font-bold">$10</strong>
             </div>
             <button
-              onClick={() => setActiveSubTab("Referrals")}
+              onClick={() => {
+                setActiveSubTab("Referrals");
+                setSidebarOpen(false);
+              }}
               className="w-full mt-3 font-mono text-[8px] tracking-[1.5px] uppercase font-bold bg-[#141414] hover:bg-[#1a1a1a] text-primary border border-border/60 py-2 transition-all cursor-pointer rounded-md outline-none"
             >
               Send Invitation
@@ -693,11 +728,20 @@ export default function Dashboard() {
       </aside>
 
       {/* ── 2. MAIN SCROLLABLE CONTENT BODY (pl-64) ── */}
-      <main className="flex-1 pl-64 flex flex-col min-h-screen bg-background relative z-10">
+      <main className="flex-1 pl-0 md:pl-64 flex flex-col min-h-screen bg-background relative z-10 w-full overflow-hidden">
 
         {/* ── STICKY SEARCH HEADER ── */}
-        <header className="sticky top-0 bg-background/95 backdrop-blur-xl border-b border-border z-20 py-4 px-8 flex items-center justify-between">
-          <div className="flex items-center gap-5 flex-1 max-w-xl">
+        <header className="sticky top-0 bg-background/95 backdrop-blur-xl border-b border-border z-20 py-4 px-4 md:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 md:gap-5 flex-1 max-w-xl">
+            {/* Mobile Sidebar Hamburger Toggle */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2.5 border border-border bg-card text-foreground hover:text-primary rounded-md cursor-pointer outline-none focus:outline-none shrink-0"
+              aria-label="Open sidebar"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+
             <button 
               onClick={() => setActiveSubTab("Vault")} 
               className="p-2.5 border border-border bg-card rounded-md text-muted-foreground hover:text-foreground hover:border-primary transition-all cursor-pointer outline-none"
@@ -720,6 +764,33 @@ export default function Dashboard() {
 
           {/* Top Actions Row */}
           <div className="flex items-center gap-5">
+            {/* Display View Toggle controls */}
+            <div className="hidden md:flex items-center gap-1 border border-border bg-card/60 p-0.5 rounded-md">
+              {[
+                { id: "default", label: "Default" },
+                { id: "box", label: "Box" },
+                { id: "wide", label: "Wide" },
+                { id: "panel", label: "Panel" }
+              ].map((viewOpt) => {
+                const isViewActive = dashboardView === viewOpt.id;
+                return (
+                  <button
+                    key={viewOpt.id}
+                    onClick={() => setDashboardView(viewOpt.id as any)}
+                    className={`px-2.5 py-1.5 font-mono text-[8px] tracking-[1px] uppercase rounded-sm transition-all cursor-pointer border-0 outline-none ${
+                      isViewActive
+                        ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                        : "text-muted-foreground hover:text-foreground bg-transparent"
+                    }`}
+                  >
+                    {viewOpt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <span className="w-px h-4 bg-border hidden md:block" />
+
             <div className="hidden lg:flex items-center gap-2">
               <button className="p-2.5 border border-border bg-card rounded-md text-muted-foreground hover:text-foreground transition-all cursor-pointer outline-none">
                 <MessageSquare className="w-4 h-4" />
@@ -752,7 +823,15 @@ export default function Dashboard() {
         </header>
 
         {/* ── MODULE PANEL WRAPPER ── */}
-        <div className="flex-1 p-8 space-y-8 max-w-7xl w-full mx-auto">
+        <div className="flex-1 flex gap-0 w-full transition-all duration-500">
+          {/* Main content column dynamically bounded by view mode */}
+          <div className={`flex-1 transition-all duration-300 w-full ${
+            dashboardView === "box" 
+              ? "max-w-5xl mx-auto p-4 md:p-10 bg-muted/20 border border-border rounded-xl shadow-lg my-0 md:my-6"
+              : dashboardView === "wide"
+              ? "max-w-none px-4 md:px-8 py-4 md:py-8 w-full"
+              : "max-w-7xl mx-auto w-full p-4 md:p-8"
+          } space-y-8`}>
           
           {/* ========================================================
               TAB 1: PORTFOLIO (VAULT) - MODULATED LAYOUT MATCHING IMAGE
@@ -1089,7 +1168,7 @@ export default function Dashboard() {
 
                   <button
                     onClick={() => handleToggleCopyProvider("Eva James")}
-                    className="w-full mt-6 font-mono text-[10px] tracking-[2.5px] uppercase font-bold bg-[#1e4620] hover:bg-[#2d6a4f] text-white py-3.5 rounded-md transition-all shadow-[0_4px_12px_rgba(45,106,79,0.2)] cursor-pointer outline-none"
+                    className="w-full mt-6 font-mono text-[10px] tracking-[2.5px] uppercase font-bold bg-[#c9a84c] hover:bg-[#dfc57b] text-white py-3.5 rounded-md transition-all shadow-[0_4px_12px_rgba(201,168,76,0.2)] cursor-pointer outline-none"
                   >
                     Copy Trader
                   </button>
@@ -1862,6 +1941,88 @@ export default function Dashboard() {
               </div>
 
             </div>
+          )}
+
+          </div>
+
+          {/* Right Panel View Sidebar (opens dynamically on larger screens) */}
+          {dashboardView === "panel" && (
+            <aside className="w-[340px] border-l border-border bg-card/40 backdrop-blur-md p-6 hidden xl:flex flex-col justify-between shrink-0 h-[calc(100vh-73px)] sticky top-[73px] overflow-y-auto animate-in slide-in-from-right duration-300">
+              <div className="space-y-6">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green animate-pulse" />
+                    <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-foreground">SMC Telemetry</h4>
+                  </div>
+                  <button 
+                    onClick={() => setDashboardView("default")}
+                    className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground rounded transition-colors cursor-pointer outline-none"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* AI Safeguard Shield Status */}
+                <div className="border border-border/80 bg-background/50 p-4 rounded-lg space-y-3 shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">AI Safeguard</span>
+                    <span className="font-mono text-[9px] text-green font-bold uppercase tracking-widest">Shield: Active</span>
+                  </div>
+                  <div className="w-full bg-muted h-1 rounded-full overflow-hidden">
+                    <div className="bg-green h-full w-[94%]" />
+                  </div>
+                  <div className="font-sans text-[10px] text-muted-foreground leading-normal">
+                    Risk allocation limits set to <strong>1% per trade</strong>. Master replication slippage threshold: <strong>2.5ms</strong>.
+                  </div>
+                </div>
+
+                {/* Live Order Blocks Parsing logs */}
+                <div className="space-y-3">
+                  <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider block">Signal stream terminal</span>
+                  
+                  <div className="space-y-2 max-h-[260px] overflow-y-auto font-mono text-[9px] leading-relaxed divide-y divide-border/40 bg-[#0c0c0c] text-green p-3 rounded border border-border/50 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]">
+                    <div className="pt-2 text-green/90">
+                      [21:40:02] PARSED // BUY BYBIT BTCUSDT @ $67,234.10
+                    </div>
+                    <div className="pt-2 text-green/90">
+                      [21:42:15] REPLICATED // SLIPPAGE: +1.2ms
+                    </div>
+                    <div className="pt-2 text-muted-foreground">
+                      [21:44:50] MONITORING // EVA JAMES ACTIVE POSITION
+                    </div>
+                    <div className="pt-2 text-yellow-500">
+                      [21:48:10] RISK GATE // BLOCK MARGIN LIMIT OK
+                    </div>
+                    <div className="pt-2 text-[#c9a84c]">
+                      [21:50:33] SYNC // ACCOUNT EQUITY +$45.20 PNL
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instant Safeguard Switch */}
+                <div className="border border-red/20 bg-red/5 p-4 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[9px] text-red font-bold uppercase tracking-wider">Safe Mode</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" />
+                  </div>
+                  <p className="font-sans text-[10px] text-muted-foreground leading-normal">
+                    Force automatic exit on all copied positions if equity drawdowns exceed 5% across any exchange.
+                  </p>
+                  <button className="w-full font-mono text-[9px] uppercase tracking-wider font-bold bg-red text-white py-2.5 rounded-md hover:bg-red/80 transition-all cursor-pointer outline-none">
+                    Arm Emergency Stop
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Footer status */}
+              <div className="pt-4 border-t border-border flex items-center justify-between font-mono text-[8px] text-muted-foreground tracking-wider mt-6">
+                <span>BUFFER: 100MB</span>
+                <span>NODE: 0xAesw</span>
+              </div>
+            </aside>
           )}
 
         </div>
