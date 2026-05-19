@@ -617,8 +617,8 @@ export default function Dashboard() {
                 ▲
               </div>
               <div>
-                <div className="font-mono text-xs font-black tracking-[2px] uppercase">TRUFUNDER</div>
-                <div className="font-mono text-[8px] tracking-[1px] text-white/50 dark:text-primary/70 uppercase">SMC Auto-Router</div>
+                <div className="font-mono text-xs font-black tracking-[2px] capitalize">TRUFUNDER</div>
+                <div className="font-mono text-[8px] tracking-[1px] text-white/50 dark:text-primary/70 capitalize">SMC Auto-Router</div>
               </div>
             </div>
             
@@ -640,7 +640,7 @@ export default function Dashboard() {
             </div>
             <div className="truncate">
               <div className="text-xs font-bold font-sans text-foreground">Jordan Smith</div>
-              <div className="font-mono text-[8px] text-muted-foreground uppercase mt-0.5 tracking-wider">✓ active node</div>
+              <div className="font-mono text-[8px] text-muted-foreground capitalize mt-0.5 tracking-wider">✓ active node</div>
             </div>
           </div>
 
@@ -663,7 +663,7 @@ export default function Dashboard() {
                     setActiveSubTab(tab.id);
                     setSidebarOpen(false);
                   }}
-                  className={`flex items-center gap-3.5 px-4 py-3 rounded-md font-mono text-[10px] tracking-wider uppercase text-left transition-all outline-none cursor-pointer ${
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-md font-mono text-[10px] tracking-wider capitalize text-left transition-all outline-none cursor-pointer ${
                     isActive 
                       ? "bg-[#c9a84c]/10 dark:bg-primary/10 text-[#c9a84c] dark:text-primary font-bold shadow-[inset_3px_0_0_#c9a84c] dark:shadow-[inset_3px_0_0_#c9a84c]" 
                       : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
@@ -691,14 +691,14 @@ export default function Dashboard() {
                 setActiveSubTab("Referrals");
                 setSidebarOpen(false);
               }}
-              className="w-full mt-3 font-mono text-[8px] tracking-[1.5px] uppercase font-bold bg-[#141414] hover:bg-[#1a1a1a] text-primary border border-border/60 py-2 transition-all cursor-pointer rounded-md outline-none"
+              className="w-full mt-3 font-mono text-[8px] tracking-[1.5px] capitalize font-bold bg-[#141414] hover:bg-[#1a1a1a] text-primary border border-border/60 py-2 transition-all cursor-pointer rounded-md outline-none"
             >
               Send Invitation
             </button>
           </div>
 
           {/* Dark Mode Switch Row matching Jordan Smith toggle */}
-          <div className="flex items-center justify-between font-mono text-[10px] uppercase text-muted-foreground pt-4 border-t border-border">
+          <div className="flex items-center justify-between font-mono text-[10px] capitalize text-muted-foreground pt-4 border-t border-border">
             <span>Dark mode</span>
             <button
               type="button"
@@ -718,7 +718,7 @@ export default function Dashboard() {
           {/* Logout element */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2 font-mono text-[10px] tracking-wider uppercase text-red hover:bg-red/5 transition-all outline-none rounded-md cursor-pointer"
+            className="w-full flex items-center gap-3 px-4 py-2 font-mono text-[10px] tracking-wider capitalize text-red hover:bg-red/5 transition-all outline-none rounded-md cursor-pointer"
           >
             <LogOut className="w-4 h-4 text-red" />
             Logout
