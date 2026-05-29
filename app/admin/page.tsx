@@ -365,18 +365,18 @@ export default function AdminDashboard() {
           <div className="p-6 rounded-xl border border-primary/20 bg-card/45 backdrop-blur-md space-y-6">
             
             {/* Header info */}
-            <div>
+            <Link href="/dashboard" className="block p-3 rounded-lg border border-border/40 bg-background/30 hover:border-primary/50 transition-all group">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                 <span className="font-mono text-[9px] tracking-[2px] uppercase text-red-400 font-bold border border-red-500/25 px-2 py-0.5 rounded bg-red-500/5">
                   {isSuperAdmin ? "Super Admin" : "Elvis Strategy"}
                 </span>
               </div>
-              <h3 className="font-heading text-lg font-bold text-foreground mt-2">
+              <h3 className="font-heading text-base font-bold text-foreground mt-2 group-hover:text-primary transition-colors">
                 {isSuperAdmin ? "Approvals Access" : "Elvis Control"}
               </h3>
-              <p className="font-mono text-[10px] text-muted-foreground truncate">{currentEmail}</p>
-            </div>
+              <p className="font-mono text-[10px] text-muted-foreground truncate group-hover:text-muted-foreground/80 transition-colors">{currentEmail}</p>
+            </Link>
 
             {/* Sidebar Buttons */}
             <nav className="flex flex-col gap-1.5 font-mono text-[11px] uppercase tracking-wider">

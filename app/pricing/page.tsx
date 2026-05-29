@@ -386,10 +386,10 @@ export default function Pricing() {
                         <div className="flex items-center justify-between py-1">
                           <span className="text-muted-foreground">Mobile Money Number:</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-foreground font-bold font-mono tracking-wider">+233 55 123 4567</span>
+                            <span className="text-foreground font-bold font-mono tracking-wider">0535427636</span>
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText("+233551234567");
+                                navigator.clipboard.writeText("0535427636");
                                 setCopiedField("number");
                                 setTimeout(() => setCopiedField(null), 2000);
                               }}
@@ -409,10 +409,10 @@ export default function Pricing() {
                         <div className="flex items-center justify-between py-1">
                           <span className="text-muted-foreground">Payment Reference:</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-primary font-bold font-mono">TF-{selectedPlan.name.toUpperCase().replace(/\s+/g, "")}-{(billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly)}</span>
+                            <span className="text-primary font-bold font-mono font-bold">TF-{selectedPlan.name.toUpperCase().replace(/\s+/g, "")}-TEST-1GHS</span>
                             <button
                               onClick={() => {
-                                const refStr = `TF-${selectedPlan.name.toUpperCase().replace(/\s+/g, "")}-${(billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly)}`;
+                                const refStr = `TF-${selectedPlan.name.toUpperCase().replace(/\s+/g, "")}-TEST-1GHS`;
                                 navigator.clipboard.writeText(refStr);
                                 setCopiedField("ref");
                                 setTimeout(() => setCopiedField(null), 2000);
@@ -434,7 +434,7 @@ export default function Pricing() {
                       <div className="space-y-2">
                         <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-wider">How to Complete Your MoMo Payment:</h4>
                         <ol className="font-mono text-[10px] text-muted-foreground space-y-1.5 list-decimal pl-4 leading-relaxed">
-                          <li>Send the exact USD equivalent amount in your local currency to the MoMo number above.</li>
+                          <li>Send exactly <strong className="text-foreground">GH₵ 1.00 (1 Cedi)</strong> to the MoMo number above (<strong className="text-foreground">0535427636</strong>).</li>
                           <li>Ensure you enter the **Payment Reference** in the payment reason/reference box.</li>
                           <li>Once the money transfer is complete, submit your details below to activate your account.</li>
                         </ol>

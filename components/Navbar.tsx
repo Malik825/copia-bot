@@ -180,11 +180,10 @@ export default function Navbar() {
               </button>
 
               {isLoggedIn ? (
-                <>
-                  {/* User Profile Chip */}
-                  <Link
-                    href={isAdmin ? "/admin" : "/dashboard"}
-                    className="flex items-center gap-2.5 border border-border/60 bg-card hover:border-primary/50 transition-all rounded-full pl-1 pr-4 py-1 group"
+                <div className="relative group/dropdown py-1">
+                  {/* User Profile Chip trigger */}
+                  <button
+                    className="flex items-center gap-2.5 border border-border/60 bg-card hover:border-primary/50 transition-all rounded-full pl-1 pr-4 py-1 group cursor-pointer outline-none focus:outline-none"
                   >
                     {/* Avatar */}
                     <div className="w-7 h-7 rounded-full overflow-hidden bg-primary/10 border border-primary/30 flex items-center justify-center text-sm shrink-0 relative">
@@ -196,7 +195,7 @@ export default function Navbar() {
                       {/* Online indicator */}
                       <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green border border-card" />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col text-left">
                       <span className="font-mono text-[10px] font-bold tracking-[1px] text-foreground group-hover:text-primary transition-colors leading-tight truncate max-w-[100px]">
                         {displayName || "Dashboard"}
                       </span>
@@ -204,16 +203,40 @@ export default function Navbar() {
                         {isAdmin ? "Admin" : "Live"}
                       </span>
                     </div>
-                  </Link>
-
-                  {/* Log Out */}
-                  <button
-                    onClick={handleLogout}
-                    className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-red-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 outline-none"
-                  >
-                    <LogOut className="w-3.5 h-3.5" /> Log Out
                   </button>
-                </>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 top-full pt-2 w-48 opacity-0 translate-y-2 pointer-events-none group-hover/dropdown:opacity-100 group-hover/dropdown:translate-y-0 group-hover/dropdown:pointer-events-auto transition-all duration-300 z-50">
+                    <div className="bg-[#0b0b12] border border-border/80 rounded-lg p-2 shadow-xl flex flex-col gap-1">
+                      <Link
+                        href="/dashboard"
+                        className="font-mono text-[10px] tracking-[1.5px] uppercase text-muted-foreground hover:text-primary hover:bg-white/[0.03] px-3 py-2 rounded transition-all text-left"
+                      >
+                        Dashboard
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          className="font-mono text-[10px] tracking-[1.5px] uppercase text-muted-foreground hover:text-primary hover:bg-white/[0.03] px-3 py-2 rounded transition-all text-left border-t border-border/40"
+                        >
+                          Admin Panel
+                        </Link>
+                      )}
+                      <Link
+                        href="/pricing"
+                        className="font-mono text-[10px] tracking-[1.5px] uppercase text-muted-foreground hover:text-primary hover:bg-white/[0.03] px-3 py-2 rounded transition-all text-left"
+                      >
+                        Pricing & Plans
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="font-mono text-[10px] tracking-[1.5px] uppercase text-left text-red-400 hover:text-red-300 hover:bg-red-500/[0.05] px-3 py-2 rounded transition-all cursor-pointer border-0 bg-transparent outline-none border-t border-border/40 w-full"
+                      >
+                        Log Out
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <>
                   {pathname !== "/signin" && (
