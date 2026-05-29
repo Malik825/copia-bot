@@ -103,7 +103,7 @@ export default function AdminDashboard() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      const validEmails = ["raedax77@gmail.com", "superadmin@trufunder.com"];
+      const validEmails = ["raedax77@gmail.com", "superadmin@raedax.com"];
       if (user && user.email && validEmails.includes(user.email.toLowerCase())) {
         // Hydrate sessionStorage for compatibility
         sessionStorage.setItem("admin_email", user.email.toLowerCase());
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
       const supabase = createClient();
 
       const sessionEmail = sessionStorage.getItem("admin_email");
-      const isSuperAdmin = sessionEmail === "superadmin@trufunder.com";
+      const isSuperAdmin = sessionEmail === "superadmin@raedax.com";
 
       // SuperAdmin doesn't need to load user auth directory
       if (!isSuperAdmin) {
@@ -341,7 +341,7 @@ export default function AdminDashboard() {
   };
 
   const currentEmail = typeof window !== "undefined" ? sessionStorage.getItem("admin_email") || "" : "";
-  const isSuperAdmin = currentEmail === "superadmin@trufunder.com";
+  const isSuperAdmin = currentEmail === "superadmin@raedax.com";
 
   if (authorized === null) {
     return (

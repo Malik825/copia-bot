@@ -12,6 +12,8 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [theme, setTheme] = useState("dark");
+  const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("👤");
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -32,10 +34,28 @@ export default function Navbar() {
 
   // Auth State Listener
   useEffect(() => {
+    const fetchProfile = async (userId: string) => {
+      try {
+        const { data } = await supabase.from("user_profiles").select("display_name, avatar_url").eq("user_id", userId).single();
+        if (data) {
+          setDisplayName(data.display_name ?? "User");
+          let loadedAvatar = data.avatar_url ?? "👤";
+          if (loadedAvatar === "local_avatar") {
+            const cached = localStorage.getItem(`local_avatar_${userId}`);
+            if (cached) loadedAvatar = cached;
+          }
+          setAvatarUrl(loadedAvatar);
+        }
+      } catch (err) {
+        console.error("Error fetching navbar profile:", err);
+      }
+    };
+
     // Initial check
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user);
       setIsAdmin(user?.email === "raedax77@gmail.com");
+      if (user) fetchProfile(user.id);
     });
 
     // Listen for auth changes
@@ -44,10 +64,11 @@ export default function Navbar() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
       setIsAdmin(session?.user?.email === "raedax77@gmail.com");
+      if (session?.user) fetchProfile(session.user.id);
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase]);
 
   // Theme Sync logic on mount
   useEffect(() => {
@@ -106,7 +127,7 @@ export default function Navbar() {
               className="flex items-center gap-2.5 font-heading text-xl tracking-[1px] text-primary hover:text-gold-light transition-all"
             >
               <img src="/Raedax.jpeg" alt="Raedax Logo" className="h-6 w-6 rounded-md object-cover border border-primary/20" />
-              <span className="font-bold tracking-tight">TruFunder</span>
+              <span className="font-bold tracking-tight">Raedax</span>
             </Link>
             
             {/* Live Security Badge */}
@@ -160,20 +181,38 @@ export default function Navbar() {
 
               {isLoggedIn ? (
                 <>
+                  {/* User Profile Chip */}
+                  <Link
+                    href={isAdmin ? "/admin" : "/dashboard"}
+                    className="flex items-center gap-2.5 border border-border/60 bg-card hover:border-primary/50 transition-all rounded-full pl-1 pr-4 py-1 group"
+                  >
+                    {/* Avatar */}
+                    <div className="w-7 h-7 rounded-full overflow-hidden bg-primary/10 border border-primary/30 flex items-center justify-center text-sm shrink-0 relative">
+                      {avatarUrl && (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) ? (
+                        <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{avatarUrl || "👤"}</span>
+                      )}
+                      {/* Online indicator */}
+                      <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green border border-card" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-mono text-[10px] font-bold tracking-[1px] text-foreground group-hover:text-primary transition-colors leading-tight truncate max-w-[100px]">
+                        {displayName || "Dashboard"}
+                      </span>
+                      <span className="font-mono text-[8px] tracking-wider text-muted-foreground uppercase leading-tight">
+                        {isAdmin ? "Admin" : "Live"}
+                      </span>
+                    </div>
+                  </Link>
+
+                  {/* Log Out */}
                   <button
                     onClick={handleLogout}
-                    className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-red transition-colors py-1 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 outline-none"
+                    className="font-mono text-[11px] tracking-[2px] uppercase text-muted-foreground hover:text-red-400 transition-colors py-1 flex items-center gap-1.5 cursor-pointer bg-transparent border-0 outline-none"
                   >
                     <LogOut className="w-3.5 h-3.5" /> Log Out
                   </button>
-                  {pathname !== "/admin" && (
-                    <Link
-                      href="/admin"
-                      className="font-mono text-[11px] tracking-[2px] uppercase bg-primary text-primary-foreground px-5 py-2.5 font-bold hover:bg-gold-light hover:-translate-y-0.5 transition-all inline-flex items-center gap-2 shadow-[0_4px_12px_rgba(201,168,76,0.12)] rounded-md"
-                    >
-                      Console <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  )}
                 </>
               ) : (
                 <>
@@ -256,15 +295,32 @@ export default function Navbar() {
 
             {isLoggedIn ? (
               <>
+                {/* Mobile Profile Chip */}
                 <Link
-                  href="/admin"
-                  className="font-mono text-[12px] tracking-[2px] uppercase text-center border border-border py-3.5 hover:border-primary transition-all text-foreground rounded-md"
+                  href={isAdmin ? "/admin" : "/dashboard"}
+                  className="flex items-center gap-3 border border-border/60 bg-card hover:border-primary/50 transition-all rounded-xl px-4 py-3 group"
                 >
-                  Enter Console
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border border-primary/30 flex items-center justify-center text-xl shrink-0 relative">
+                    {avatarUrl && (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) ? (
+                      <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{avatarUrl || "👤"}</span>
+                    )}
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green border-2 border-card" />
+                  </div>
+                  <div>
+                    <div className="font-mono text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                      {displayName || "Dashboard"}
+                    </div>
+                    <div className="font-mono text-[9px] tracking-wider text-muted-foreground uppercase">
+                      {isAdmin ? "Admin Console" : "Live Dashboard"}
+                    </div>
+                  </div>
                 </Link>
+
                 <button
                   onClick={handleLogout}
-                  className="font-mono text-[12px] tracking-[2px] uppercase text-center bg-red/10 border border-red/30 text-red py-3.5 font-bold hover:bg-red/20 transition-all cursor-pointer rounded-md"
+                  className="font-mono text-[12px] tracking-[2px] uppercase text-center bg-red-500/10 border border-red-500/30 text-red-400 py-3.5 font-bold hover:bg-red-500/20 transition-all cursor-pointer rounded-md"
                 >
                   Log Out
                 </button>
