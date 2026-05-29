@@ -246,7 +246,7 @@ export default function Contact() {
               </Link>
 
               <a
-                href="mailto:support@trufunder.com"
+                href="mailto:support@raedax.com"
                 className="flex items-start gap-4 p-4 border border-border bg-background/50 hover:border-primary rounded-lg transition-all"
               >
                 <div className="w-9 h-9 border border-border rounded-lg flex items-center justify-center text-primary shrink-0">
@@ -255,7 +255,7 @@ export default function Contact() {
                 <div>
                   <div className="font-mono text-xs font-bold text-foreground">Email Communications</div>
                   <div className="font-sans text-[10px] text-muted-foreground mt-0.5 leading-relaxed">
-                    Send detailed diagnostics, custom EA scripts, or licensing inquiries to support@trufunder.com.
+                    Send detailed diagnostics, custom EA scripts, or licensing inquiries to support@raedax.com.
                   </div>
                 </div>
               </a>
@@ -306,10 +306,10 @@ export default function Contact() {
       {/* ── FOOTER ── */}
       <footer className="border-t border-border px-6 md:px-12 py-9 flex items-center justify-between flex-wrap gap-4 max-w-6xl mx-auto w-full">
         <div className="font-heading text-lg tracking-[3px] text-primary">
-          TRUFUNDER
+          RAEDAX
         </div>
         <div className="font-mono text-[10px] tracking-[1px] text-muted-foreground">
-          © 2026 TruFunder · Trading involves risk · Not financial advice
+          © 2026 Raedax · Trading involves risk · Not financial advice
         </div>
       </footer>
     </div>

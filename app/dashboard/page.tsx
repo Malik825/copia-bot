@@ -33,7 +33,9 @@ import {
   Bell,
   BookOpen,
   Menu,
-  X
+  X,
+  Upload,
+  User
 } from "lucide-react";
 import { verifyAndAdjustTradeSignal, RiskRules } from "@/lib/mirrorEngine";
 import { TradePosition, VerifiedTrader } from "@/lib/types";
@@ -213,7 +215,12 @@ export default function Dashboard() {
         const { data: profile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).single();
         if (profile) {
           setDisplayName(profile.display_name ?? "Jordan Smith");
-          setAvatarUrl(profile.avatar_url ?? "👤");
+          let loadedAvatar = profile.avatar_url ?? "👤";
+          if (loadedAvatar === "local_avatar") {
+            const cached = localStorage.getItem(`local_avatar_${user.id}`);
+            if (cached) loadedAvatar = cached;
+          }
+          setAvatarUrl(loadedAvatar);
           setAccountEquity(profile.account_equity);
           setMaxExposurePercent(profile.max_exposure_percent);
           setMaxLeverageCap(profile.max_leverage_cap);
@@ -262,9 +269,14 @@ export default function Dashboard() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        let dbAvatar = avatarUrl;
+        if (avatarUrl && avatarUrl.startsWith("data:")) {
+          localStorage.setItem(`local_avatar_${user.id}`, avatarUrl);
+          dbAvatar = "local_avatar";
+        }
         await supabase.from("user_profiles").update({
           display_name: displayName,
-          avatar_url: avatarUrl,
+          avatar_url: dbAvatar,
           max_leverage_cap: maxLeverageCap,
           slippage_limit_percent: slippageLimitPercent,
           max_position_size_usdt: maxPositionSizeUsdt,
@@ -275,6 +287,80 @@ export default function Dashboard() {
     const timer = setTimeout(saveProfile, 1000);
     return () => clearTimeout(timer);
   }, [displayName, avatarUrl, maxLeverageCap, slippageLimitPercent, maxPositionSizeUsdt, orderBlockFilterEnabled, authorized]);
+
+  // Handle image upload and client-side compression/resizing
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const img = document.createElement("img");
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 120;
+        const MAX_HEIGHT = 120;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob and upload to Supabase Storage
+          canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            try {
+              const supabase = createClient();
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const fileExt = "jpg";
+                const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from("avatars")
+                  .upload(filePath, blob, {
+                    contentType: "image/jpeg",
+                    upsert: true
+                  });
+
+                if (uploadError) {
+                  console.warn("Supabase storage upload failed, using fallback:", uploadError);
+                  const base64 = canvas.toDataURL("image/jpeg", 0.7);
+                  setAvatarUrl(base64);
+                } else {
+                  const { data: { publicUrl } } = supabase.storage
+                    .from("avatars")
+                    .getPublicUrl(filePath);
+                  setAvatarUrl(publicUrl);
+                }
+              }
+            } catch (err) {
+              console.error("Supabase Storage error, using fallback:", err);
+              const base64 = canvas.toDataURL("image/jpeg", 0.7);
+              setAvatarUrl(base64);
+            }
+          }, "image/jpeg", 0.75);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Scroll terminal logs to bottom
   useEffect(() => {
@@ -588,7 +674,7 @@ export default function Dashboard() {
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText("https://trufunder.com/ref/0x034553c53244fe3555829224d");
+    navigator.clipboard.writeText("https://raedax.com/ref/0x034553c53244fe3555829224d");
     setRefCopied(true);
     setTimeout(() => setRefCopied(false), 2000);
   };
@@ -682,15 +768,15 @@ export default function Dashboard() {
           
           {/* Logo brand banner block */}
           <div className="flex items-center justify-between py-3.5 px-4 bg-[#c9a84c] dark:bg-[#0c0c0c] border border-[#c9a84c]/20 dark:border-border text-white rounded-md">
-            <div className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2.5 hover:opacity-85 transition-opacity cursor-pointer">
               <div className="w-8 h-8 rounded-lg bg-white/10 dark:bg-primary/20 flex items-center justify-center font-bold text-lg text-primary-foreground dark:text-primary">
-                â–²
+                ▲
               </div>
               <div>
-                <div className="font-mono text-xs font-black tracking-[2px] capitalize">TRUFUNDER</div>
+                <div className="font-mono text-xs font-black tracking-[2px] capitalize">RAEDAX</div>
                 <div className="font-mono text-[8px] tracking-[1px] text-white/50 dark:text-primary/70 capitalize">SMC Auto-Router</div>
               </div>
-            </div>
+            </Link>
             
             {/* Mobile close button */}
             <button
@@ -705,7 +791,11 @@ export default function Dashboard() {
           {/* Profile Active User slot */}
           <div className="flex items-center gap-3.5 px-2.5 py-1.5 border-b border-border/40 pb-5">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center text-xl relative shrink-0">
-              {avatarUrl}
+              {avatarUrl && (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-sans">{avatarUrl || "👤"}</span>
+              )}
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green border-2 border-card" />
             </div>
             <div className="truncate flex-1">
@@ -1369,7 +1459,7 @@ export default function Dashboard() {
                         <select
                           value={tradeSymbol}
                           onChange={(e) => setTradeSymbol(e.target.value)}
-                          className="w-full bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md dark:bg-black light:bg-background"
+                          className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md"
                         >
                           <option value="BTC-USDT">BTC-USDT (Crypto Spot/Futures)</option>
                           <option value="ETH-USDT">ETH-USDT (Crypto Spot/Futures)</option>
@@ -1413,7 +1503,7 @@ export default function Dashboard() {
                             type="text"
                             value={tradeSize}
                             onChange={(e) => setTradeSize(e.target.value)}
-                            className="w-full bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md dark:bg-black light:bg-background"
+                            className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md"
                           />
                           <button
                             type="button"
@@ -1438,7 +1528,7 @@ export default function Dashboard() {
                           step="5"
                           value={tradeLeverage}
                           onChange={(e) => setTradeLeverage(parseInt(e.target.value))}
-                          className="w-full accent-primary bg-black h-1 rounded-lg"
+                          className="w-full accent-primary bg-muted dark:bg-black h-1 rounded-lg"
                         />
                         <span className="text-[8px] font-mono text-muted-foreground mt-1 block">Leverage limit capped dynamically by Shield rules.</span>
                       </div>
@@ -1492,7 +1582,7 @@ export default function Dashboard() {
               <div className="lg:col-span-4 space-y-6">
                 
                 {/* Websocket Logger */}
-                <div className="border border-border bg-black/90 dark:bg-black/90 light:bg-[#0c0c0c]/5 p-5 flex flex-col min-h-[300px] rounded-lg shadow-sm">
+                <div className="border border-border bg-muted/40 dark:bg-black/90 p-5 flex flex-col min-h-[300px] rounded-lg shadow-sm">
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-border">
                     <span className="font-mono text-[9px] tracking-[2px] text-primary uppercase font-bold">Secure Router Stream</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
@@ -1524,8 +1614,8 @@ export default function Dashboard() {
                 </div>
 
                 {/* Emergency exit liquidator button */}
-                <div className="border border-red/30 bg-[#120a0a] p-5 relative rounded-lg shadow-sm">
-                  <span className="absolute -top-3.5 left-5 bg-[#120a0a] border border-red/30 px-3 text-red text-[9px] font-mono tracking-wider uppercase rounded-md">
+                <div className="border border-red/30 bg-red-50 dark:bg-[#120a0a] p-5 relative rounded-lg shadow-sm">
+                  <span className="absolute -top-3.5 left-5 bg-red-50 dark:bg-[#120a0a] border border-red/30 px-3 text-red text-[9px] font-mono tracking-wider uppercase rounded-md">
                     â˜¢ SAFEGUARD TRIGGER
                   </span>
                   <p className="font-sans text-[10px] text-red/80 mb-4 leading-relaxed">
@@ -1590,7 +1680,7 @@ export default function Dashboard() {
                   placeholder="Search by instrument or provider..."
                   value={activitySearch}
                   onChange={(e) => setActivitySearch(e.target.value)}
-                  className="w-full bg-black border border-border text-xs text-foreground font-mono pl-10 pr-4 py-3 outline-none focus:border-primary rounded-md dark:bg-black light:bg-background"
+                  className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono pl-10 pr-4 py-3 outline-none focus:border-primary rounded-md"
                 />
               </div>
 
@@ -1826,8 +1916,8 @@ export default function Dashboard() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 bg-black/60 border border-border px-4 py-3 text-xs font-mono text-muted-foreground rounded-md flex items-center justify-between dark:bg-black/60 light:bg-background">
-                    <span>https://trufunder.com/ref/0x034553c53244fe3555829224d</span>
+                  <div className="flex-1 bg-muted dark:bg-black/60 border border-border px-4 py-3 text-xs font-mono text-muted-foreground rounded-md flex items-center justify-between">
+                    <span>https://raedax.com/ref/0x034553c53244fe3555829224d</span>
                     <span className="text-[10px] text-primary select-none">Secure SSL</span>
                   </div>
                   <button
@@ -1893,35 +1983,90 @@ export default function Dashboard() {
                     <h3 className="font-heading text-lg tracking-[2px] uppercase text-foreground">User Profile Settings</h3>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-1.5">
-                        <label className="font-mono text-[9px] tracking-wider text-muted-foreground uppercase block font-bold">Display Name</label>
+                  <div className="space-y-6">
+                    <div className="flex flex-col md:flex-row items-center gap-6 pb-2">
+                      {/* Avatar preview block */}
+                      <div className="relative group cursor-pointer shrink-0">
+                        <div 
+                          onClick={() => document.getElementById("avatar-file-input")?.click()}
+                          className="w-20 h-20 rounded-full overflow-hidden bg-primary/10 border-2 border-dashed border-primary/30 hover:border-primary flex items-center justify-center text-3xl transition-all relative group-hover:scale-105"
+                          title="Click to upload a custom profile picture"
+                        >
+                          {avatarUrl && (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) ? (
+                            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-sans">{avatarUrl || "👤"}</span>
+                          )}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[9px] font-mono tracking-wider transition-opacity uppercase">
+                            <Upload className="w-4 h-4 mb-1 text-primary" />
+                            <span>Upload</span>
+                          </div>
+                        </div>
                         <input
-                          type="text"
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          className="w-full bg-black border border-border text-xs text-foreground font-mono px-4 py-3 outline-none focus:border-primary rounded-md dark:bg-black light:bg-background"
-                          placeholder="e.g. Jordan Smith"
+                          id="avatar-file-input"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
                         />
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="font-mono text-[9px] tracking-wider text-muted-foreground uppercase block font-bold">Profile Avatar (Emoji)</label>
-                        <select
-                          value={avatarUrl}
-                          onChange={(e) => setAvatarUrl(e.target.value)}
-                          className="w-full bg-black border border-border text-xs text-foreground font-mono px-4 py-3 outline-none focus:border-primary rounded-md dark:bg-black light:bg-background"
-                        >
-                          <option value="👤">👤 Classic User</option>
-                          <option value="🦊">🦊 Neon Fox</option>
-                          <option value="⚡">⚡ Speed Trader</option>
-                          <option value="🤖">🤖 Algo Bot</option>
-                          <option value="🦁">🦁 Lion Bull</option>
-                          <option value="👑">👑 Gold Maker</option>
-                        </select>
+                      {/* Display name and custom upload description */}
+                      <div className="flex-1 w-full space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="font-mono text-[9px] tracking-wider text-muted-foreground uppercase block font-bold">Display Name</label>
+                          <input
+                            type="text"
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-4 py-3 outline-none focus:border-primary rounded-md"
+                            placeholder="e.g. Jordan Smith"
+                          />
+                        </div>
                       </div>
                     </div>
+
+                    {/* Quick Presets Selection */}
+                    <div className="space-y-2 border-t border-border/40 pt-4">
+                      <label className="font-mono text-[9px] tracking-wider text-muted-foreground uppercase block font-bold">Quick Presets / Standard Avatars</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { val: "👤", name: "Classic" },
+                          { val: "🦊", name: "Neon Fox" },
+                          { val: "⚡", name: "Speed" },
+                          { val: "🤖", name: "Algo" },
+                          { val: "🦁", name: "Lion" },
+                          { val: "👑", name: "Gold" },
+                        ].map((preset) => (
+                          <button
+                            key={preset.val}
+                            onClick={() => setAvatarUrl(preset.val)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono transition-all cursor-pointer ${
+                              avatarUrl === preset.val 
+                                ? "bg-primary/10 border-primary text-primary" 
+                                : "bg-background border-border text-foreground/80 hover:text-foreground hover:border-border-hover dark:hover:border-primary/40"
+                            }`}
+                          >
+                            <span>{preset.val}</span>
+                            <span className="text-[10px] opacity-80">{preset.name}</span>
+                          </button>
+                        ))}
+                        
+                        {/* Custom upload indicator button */}
+                        <button
+                          onClick={() => document.getElementById("avatar-file-input")?.click()}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono transition-all cursor-pointer ${
+                            avatarUrl && (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:"))
+                              ? "bg-primary/10 border-primary text-primary"
+                              : "bg-background border-border text-foreground/80 hover:text-foreground hover:border-border-hover dark:hover:border-primary/40"
+                          }`}
+                        >
+                          <Upload className="w-3 h-3 text-primary" />
+                          <span>Custom Photo</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <p className="text-[9px] font-mono text-muted-foreground uppercase">Changes are automatically saved and synced to your database.</p>
                   </div>
                 </div>
@@ -1969,7 +2114,7 @@ export default function Dashboard() {
                         placeholder="0.00 USDT"
                         value={depositAmount}
                         onChange={(e) => setDepositAmount(e.target.value)}
-                        className="w-full bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md dark:bg-black light:bg-background"
+                        className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md"
                       />
                     </div>
 
@@ -1986,7 +2131,7 @@ export default function Dashboard() {
                         step="7"
                         value={lockingPeriod}
                         onChange={(e) => setLockingPeriod(parseInt(e.target.value))}
-                        className="w-full accent-primary bg-black h-1 rounded-lg"
+                        className="w-full accent-primary bg-muted dark:bg-black h-1 rounded-lg"
                       />
                     </div>
 
@@ -2055,7 +2200,7 @@ export default function Dashboard() {
                           step="5"
                           value={maxLeverageCap}
                           onChange={(e) => setMaxLeverageCap(parseInt(e.target.value))}
-                          className="w-full accent-primary bg-black h-1 rounded-lg"
+                          className="w-full accent-primary bg-muted dark:bg-black h-1 rounded-lg"
                         />
                       </div>
 
@@ -2071,7 +2216,7 @@ export default function Dashboard() {
                           step="0.05"
                           value={slippageLimitPercent}
                           onChange={(e) => setSlippageLimitPercent(parseFloat(e.target.value))}
-                          className="w-full accent-primary bg-black h-1 rounded-lg"
+                          className="w-full accent-primary bg-muted dark:bg-black h-1 rounded-lg"
                         />
                       </div>
 
@@ -2087,7 +2232,7 @@ export default function Dashboard() {
                           step="100"
                           value={maxPositionSizeUsdt}
                           onChange={(e) => setMaxPositionSizeUsdt(parseInt(e.target.value))}
-                          className="w-full accent-primary bg-black h-1 rounded-lg"
+                          className="w-full accent-primary bg-muted dark:bg-black h-1 rounded-lg"
                         />
                       </div>
 
@@ -2113,18 +2258,18 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       {/* Latency and Profit metrics */}
                       <div className="grid grid-cols-2 gap-4 font-mono text-center">
-                        <div className="border border-border p-3 bg-black/20 dark:bg-black/20 light:bg-background">
+                        <div className="border border-border p-3 bg-muted/30 dark:bg-black/20">
                           <div className="text-[8px] text-muted-foreground uppercase tracking-widest">Routing Ping</div>
                           <div className="text-xs text-green font-bold mt-1">{latency}ms</div>
                         </div>
-                        <div className="border border-border p-3 bg-black/20 dark:bg-black/20 light:bg-background">
+                        <div className="border border-border p-3 bg-muted/30 dark:bg-black/20">
                           <div className="text-[8px] text-muted-foreground uppercase tracking-widest">Shield Yield</div>
                           <div className="text-xs text-primary font-bold mt-1">+{totalProfit}%</div>
                         </div>
                       </div>
 
                       <div className="text-[10px] font-mono text-muted-foreground leading-relaxed">
-                        TruFunderâ€™s mirror engine performs visual signal parsing through a dedicated Telegram websocket, validating order triggers against institutional liquidity blocks prior to execution.
+                        Raedax’s mirror engine performs visual signal parsing through a dedicated Telegram websocket, validating order triggers against institutional liquidity blocks prior to execution.
                       </div>
                     </div>
                   )}
@@ -2223,10 +2368,10 @@ export default function Dashboard() {
         {/* â”€â”€ FOOTER BAR â”€â”€ */}
         <footer className="border-t border-border px-8 py-5 flex items-center justify-between flex-wrap gap-4 bg-card/40 mt-auto">
           <div className="font-heading text-base tracking-[3px] text-primary">
-            TRUFUNDER
+            RAEDAX
           </div>
           <div className="font-mono text-[9px] tracking-[1px] text-muted-foreground uppercase">
-            Â© 2026 TruFunder Â· sandboxed replication engine Â· not financial advice
+            © 2026 Raedax · sandboxed replication engine · not financial advice
           </div>
         </footer>
 
@@ -2254,7 +2399,7 @@ export default function Dashboard() {
                 <select
                   value={selectedExchange}
                   onChange={(e) => setSelectedExchange(e.target.value)}
-                  className="w-full bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary dark:bg-black light:bg-background rounded-md"
+                  className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md"
                 >
                   <option value="Binance">Binance USDM Futures</option>
                   <option value="Bybit">Bybit Unified Futures</option>
@@ -2270,7 +2415,7 @@ export default function Dashboard() {
                   placeholder="Enter sandboxed public client API key"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  className="w-full bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary dark:bg-black light:bg-background rounded-md"
+                  className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md"
                   required
                 />
               </div>
@@ -2282,7 +2427,7 @@ export default function Dashboard() {
                   placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   value={apiSecret}
                   onChange={(e) => setApiSecret(e.target.value)}
-                  className="w-full bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary dark:bg-black light:bg-background rounded-md"
+                  className="w-full bg-background dark:bg-black border border-border text-xs text-foreground font-mono px-3 py-3 outline-none focus:border-primary rounded-md"
                   required
                 />
               </div>
@@ -2297,7 +2442,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setShowApiModal(false)}
-                  className="flex-1 font-mono text-[10px] tracking-[2px] uppercase bg-[#1a1a1a] text-muted-foreground py-3 hover:text-foreground transition-all cursor-pointer outline-none rounded-md"
+                  className="flex-1 font-mono text-[10px] tracking-[2px] uppercase bg-muted dark:bg-[#1a1a1a] text-muted-foreground py-3 hover:text-foreground transition-all cursor-pointer outline-none rounded-md"
                 >
                   Cancel
                 </button>

@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       price_amount: amount,
       price_currency: "usd",
       order_id: invoice.id,
-      order_description: `TruFunder ${planName} Plan (${billingCycle})`,
+      order_description: `Raedax ${planName} Plan (${billingCycle})`,
       ipn_callback_url: "https://yourdomain.com/api/payments/webhook", 
       success_url: "https://yourdomain.com/admin",
       cancel_url: "https://yourdomain.com/pricing"
