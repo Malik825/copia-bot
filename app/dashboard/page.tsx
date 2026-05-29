@@ -1118,9 +1118,9 @@ export default function Dashboard() {
                       </thead>
                       <tbody className="divide-y divide-border">
                         {[
-                          { symbol: "SEDG", name: "SolarEdge Technologies", count: "145 trades (5.64%)", profit: "+47.21%", loss: "-07.36%", risk: "3.8", color: "text-green" },
-                          { symbol: "META", name: "Meta Platform Inc", count: "272 trades (7.39%)", profit: "+07.31%", loss: "-04.42%", risk: "5.2", color: "text-[#e8c97a]" },
-                          { symbol: "SWK", name: "Stanley Black & Decker Inc", count: "62 trades (4.26%)", profit: "+20.53%", loss: "-21.97%", risk: "8.2", color: "text-red" },
+                          { symbol: "EURUSD", name: "Euro / US Dollar", count: "145 trades (5.64%)", profit: "+47.21%", loss: "-07.36%", risk: "1.8", color: "text-green" },
+                          { symbol: "GBPUSD", name: "British Pound / US Dollar", count: "272 trades (7.39%)", profit: "+07.31%", loss: "-04.42%", risk: "2.2", color: "text-[#e8c97a]" },
+                          { symbol: "XAUUSD", name: "Gold / US Dollar", count: "62 trades (4.26%)", profit: "+20.53%", loss: "-21.97%", risk: "3.2", color: "text-red" },
                           { symbol: "BTC-USDT", name: "Bitcoin Spot/Futures", count: "180 trades (8.15%)", profit: "+30.48%", loss: "-0.15%", risk: "1.5", color: "text-green" }
                         ].map((row, i) => (
                           <tr key={i} className="hover:bg-muted/30 transition-colors">
@@ -1217,7 +1217,7 @@ export default function Dashboard() {
                         ðŸ‘©â€ðŸ’¼
                       </div>
                       <div>
-                        <div className="text-xs font-bold font-sans text-foreground">Eva James</div>
+                        <div className="text-xs font-bold font-sans text-foreground">Elvis</div>
                         <div className="font-mono text-[9px] text-muted-foreground mt-0.5 tracking-wider uppercase">
                           8 years of experience
                         </div>
@@ -1226,20 +1226,13 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-
-                    <button 
-                      onClick={() => handleToggleCopyProvider("Eva James")}
-                      className="font-mono text-[9px] tracking-[1.5px] uppercase bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-all cursor-pointer font-bold outline-none"
-                    >
-                      Follow
-                    </button>
                   </div>
 
                   <div className="mt-5 space-y-4 font-sans text-xs">
                     <div>
                       <h5 className="font-bold text-foreground">Biography</h5>
                       <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
-                        My name is Eva James and I have been trading for more than 8 years of investing experience. I am here to mirror ICT setups...
+                        My name is Elvis and I have been trading for more than 8 years of investing experience. I am here to mirror ICT setups...
                       </p>
                     </div>
 
@@ -1252,7 +1245,7 @@ export default function Dashboard() {
                   </div>
 
                   <button
-                    onClick={() => handleToggleCopyProvider("Eva James")}
+                    onClick={() => handleToggleCopyProvider("Elvis")}
                     className="w-full mt-6 font-mono text-[10px] tracking-[2.5px] uppercase font-bold bg-[#c9a84c] hover:bg-[#dfc57b] text-white py-3.5 rounded-md transition-all shadow-[0_4px_12px_rgba(201,168,76,0.2)] cursor-pointer outline-none"
                   >
                     Copy Trader
@@ -1303,7 +1296,7 @@ export default function Dashboard() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-[#4c0519] inline-block" />
-                          <span className="text-muted-foreground">Stock</span>
+                          <span className="text-muted-foreground">Forex Major</span>
                         </div>
                         <span className="font-bold text-foreground">35%</span>
                       </div>
@@ -1311,7 +1304,7 @@ export default function Dashboard() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-[#f25a5a] inline-block" />
-                          <span className="text-muted-foreground">ETFs</span>
+                          <span className="text-muted-foreground">Synthetics</span>
                         </div>
                         <span className="font-bold text-foreground">15%</span>
                       </div>
@@ -1319,7 +1312,7 @@ export default function Dashboard() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-[#c9a84c] inline-block" />
-                          <span className="text-muted-foreground">Commodities</span>
+                          <span className="text-muted-foreground">Metals (Gold)</span>
                         </div>
                         <span className="font-bold text-foreground">19%</span>
                       </div>
@@ -1682,11 +1675,11 @@ export default function Dashboard() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {[
-                      { rank: "01", name: "Martin", avatar: "ðŸª", market: "Crypto SMC Order Block", followers: "196 / 200", roi: "+110%", winrate: "88%", streak: "9 Wins", aum: "$1.3M" },
-                      { rank: "02", name: "Nancy", avatar: "âš¡", market: "Synthetics Low-Latency Scalp", followers: "110 / 150", roi: "+142%", winrate: "91%", streak: "14 Wins", aum: "$45.5K" },
-                      { rank: "03", name: "Larry", avatar: "ðŸ”®", market: "Forex Institutional Liquidity", followers: "190 / 200", roi: "+85%", winrate: "82%", streak: "4 Wins", aum: "$31.4K" },
-                      { rank: "04", name: "Alpha_Strategist", avatar: "ðŸ”¥", market: "Multi-Asset Momentum Grid", followers: "85 / 100", roi: "+76%", winrate: "78%", streak: "3 Wins", aum: "$120.0K" },
-                      { rank: "05", name: "SMC_Sniper", avatar: "ðŸ’€", market: "Deriv Synthetics Smart Money", followers: "50 / 80", roi: "+92%", winrate: "85%", streak: "6 Wins", aum: "$15.8K" },
+                      { rank: "01", name: "Elvis", avatar: "💼", market: "Crypto SMC Order Block", followers: "196 / 200", roi: "+110%", winrate: "88%", streak: "9 Wins", aum: "$1.3M" },
+                      { rank: "02", name: "Nancy", avatar: "⚡", market: "Synthetics Low-Latency Scalp", followers: "110 / 150", roi: "+142%", winrate: "91%", streak: "14 Wins", aum: "$45.5K" },
+                      { rank: "03", name: "Larry", avatar: "🔮", market: "Forex Institutional Liquidity", followers: "190 / 200", roi: "+85%", winrate: "82%", streak: "4 Wins", aum: "$31.4K" },
+                      { rank: "04", name: "Alpha_Strategist", avatar: "🔥", market: "Multi-Asset Momentum Grid", followers: "85 / 100", roi: "+76%", winrate: "78%", streak: "3 Wins", aum: "$120.0K" },
+                      { rank: "05", name: "SMC_Sniper", avatar: "💀", market: "Deriv Synthetics Smart Money", followers: "50 / 80", roi: "+92%", winrate: "85%", streak: "6 Wins", aum: "$15.8K" },
                     ].map((lead, i) => {
                       const isCurrentlyCopying = copiedProviders.includes(lead.name);
                       return (

@@ -98,23 +98,22 @@ export default function AdminDashboard() {
   const [newProvWinRate, setNewProvWinRate] = useState("85");
   const [newProvAum, setNewProvAum] = useState("50000");
 
-  // Verify Admin Login Credentials (raedax77@gmail.com & Raedax@123)
-  // Verify Admin Login Credentials dynamically with Supabase
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (user && user.email?.toLowerCase() === "raedax77@gmail.com") {
+      const validEmails = ["raedax77@gmail.com", "superadmin@trufunder.com"];
+      if (user && user.email && validEmails.includes(user.email.toLowerCase())) {
         // Hydrate sessionStorage for compatibility
-        sessionStorage.setItem("admin_email", "raedax77@gmail.com");
+        sessionStorage.setItem("admin_email", user.email.toLowerCase());
         sessionStorage.setItem("admin_token", "admin-session-verified");
         setAuthorized(true);
       } else {
         // Check sessionStorage fallback
         const sessionEmail = sessionStorage.getItem("admin_email");
         const sessionToken = sessionStorage.getItem("admin_token");
-        if (sessionEmail === "raedax77@gmail.com" && sessionToken === "admin-session-verified") {
+        if (sessionEmail && validEmails.includes(sessionEmail) && sessionToken === "admin-session-verified") {
           setAuthorized(true);
         } else {
           router.push("/signin");
@@ -131,23 +130,27 @@ export default function AdminDashboard() {
     const fetchData = async () => {
       const supabase = createClient();
 
-      // --- Fetch real registered users from Supabase Auth ---
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const sessionEmail = sessionStorage.getItem("admin_email");
+      const isSuperAdmin = sessionEmail === "superadmin@trufunder.com";
 
-      if (!authError && authUsers?.users) {
-        const mappedUsers: UserAccount[] = authUsers.users.map((u: any) => ({
-          id: u.id,
-          email: u.email || "unknown",
-          plan: "Free" as const,
-          connectedKeys: 0,
-          joinedDate: new Date(u.created_at).toLocaleDateString(),
-          status: "active" as const,
-        }));
-        setUsers(mappedUsers);
-        addLog(`DB LINK // Loaded ${mappedUsers.length} registered users from Supabase Auth.`, "success");
-      } else {
-        // Fallback: fetch users via a simpler method if admin API is unavailable
-        addLog(`AUTH NOTE // Admin user listing requires service role. Showing invoiced users.`, "warning");
+      // SuperAdmin doesn't need to load user auth directory
+      if (!isSuperAdmin) {
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+
+        if (!authError && authUsers?.users) {
+          const mappedUsers: UserAccount[] = authUsers.users.map((u: any) => ({
+            id: u.id,
+            email: u.email || "unknown",
+            plan: "Free" as const,
+            connectedKeys: 0,
+            joinedDate: new Date(u.created_at).toLocaleDateString(),
+            status: "active" as const,
+          }));
+          setUsers(mappedUsers);
+          addLog(`DB LINK // Loaded ${mappedUsers.length} registered users from Supabase Auth.`, "success");
+        } else {
+          addLog(`AUTH NOTE // Admin user listing requires service role. Showing invoiced users.`, "warning");
+        }
       }
 
       // --- Fetch real invoices ---
@@ -337,6 +340,9 @@ export default function AdminDashboard() {
     router.push("/signin");
   };
 
+  const currentEmail = typeof window !== "undefined" ? sessionStorage.getItem("admin_email") || "" : "";
+  const isSuperAdmin = currentEmail === "superadmin@trufunder.com";
+
   if (authorized === null) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
@@ -363,43 +369,49 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
                 <span className="font-mono text-[9px] tracking-[2px] uppercase text-red-400 font-bold border border-red-500/25 px-2 py-0.5 rounded bg-red-500/5">
-                  Platform Owner
+                  {isSuperAdmin ? "Super Admin" : "Elvis Strategy"}
                 </span>
               </div>
-              <h3 className="font-heading text-lg font-bold text-foreground mt-2">Raedax Control</h3>
-              <p className="font-mono text-[10px] text-muted-foreground truncate">raedax77@gmail.com</p>
+              <h3 className="font-heading text-lg font-bold text-foreground mt-2">
+                {isSuperAdmin ? "Approvals Access" : "Elvis Control"}
+              </h3>
+              <p className="font-mono text-[10px] text-muted-foreground truncate">{currentEmail}</p>
             </div>
 
             {/* Sidebar Buttons */}
             <nav className="flex flex-col gap-1.5 font-mono text-[11px] uppercase tracking-wider">
-              <button
-                onClick={() => setActiveTab("overview")}
-                className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
-                  activeTab === "overview" 
-                    ? "bg-primary text-primary-foreground font-bold shadow-md" 
-                    : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                }`}
-              >
-                <span>Overview</span>
-                <TrendingUp className="w-3.5 h-3.5" />
-              </button>
+              {!isSuperAdmin && (
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
+                    activeTab === "overview" 
+                      ? "bg-primary text-primary-foreground font-bold shadow-md" 
+                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  }`}
+                >
+                  <span>Overview</span>
+                  <TrendingUp className="w-3.5 h-3.5" />
+                </button>
+              )}
 
-              <button
-                onClick={() => setActiveTab("users")}
-                className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
-                  activeTab === "users" 
-                    ? "bg-primary text-primary-foreground font-bold shadow-md" 
-                    : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                }`}
-              >
-                <span>User Directory</span>
-                <Users className="w-3.5 h-3.5" />
-              </button>
+              {!isSuperAdmin && (
+                <button
+                  onClick={() => setActiveTab("users")}
+                  className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
+                    activeTab === "users" 
+                      ? "bg-primary text-primary-foreground font-bold shadow-md" 
+                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  }`}
+                >
+                  <span>User Directory</span>
+                  <Users className="w-3.5 h-3.5" />
+                </button>
+              )}
 
               <button
                 onClick={() => setActiveTab("payments")}
                 className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
-                  activeTab === "payments" 
+                  (activeTab as string) === "payments" || isSuperAdmin
                     ? "bg-primary text-primary-foreground font-bold shadow-md" 
                     : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                 }`}
@@ -408,17 +420,19 @@ export default function AdminDashboard() {
                 <Coins className="w-3.5 h-3.5" />
               </button>
 
-              <button
-                onClick={() => setActiveTab("providers")}
-                className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
-                  activeTab === "providers" 
-                    ? "bg-primary text-primary-foreground font-bold shadow-md" 
-                    : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                }`}
-              >
-                <span>Providers & Trends</span>
-                <Sliders className="w-3.5 h-3.5" />
-              </button>
+              {!isSuperAdmin && (
+                <button
+                  onClick={() => setActiveTab("providers")}
+                  className={`w-full text-left py-3 px-4 rounded-lg transition-all flex items-center justify-between outline-none cursor-pointer border-0 ${
+                    activeTab === "providers" 
+                      ? "bg-primary text-primary-foreground font-bold shadow-md" 
+                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  }`}
+                >
+                  <span>Providers & Trends</span>
+                  <Sliders className="w-3.5 h-3.5" />
+                </button>
+              )}
             </nav>
 
             <div className="pt-4 border-t border-border/50">
@@ -439,7 +453,7 @@ export default function AdminDashboard() {
         <main className="flex-1 flex flex-col gap-6">
 
           {/* TAB 1: OVERVIEW */}
-          {activeTab === "overview" && (
+          {activeTab === "overview" && !isSuperAdmin && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
               {/* Stat Cards */}
@@ -531,7 +545,7 @@ export default function AdminDashboard() {
           )}
 
           {/* TAB 2: USER DIRECTORY */}
-          {activeTab === "users" && (
+          {activeTab === "users" && !isSuperAdmin && (
             <div className="p-6 border border-border bg-card/25 rounded-xl space-y-6 animate-in fade-in duration-300">
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -668,7 +682,7 @@ export default function AdminDashboard() {
                       <th className="p-4">Requested Tier</th>
                       <th className="p-4">Payment Method</th>
                       <th className="p-4">Ledger Ref / TxID</th>
-                      <th className="p-4">Amount Due</th>
+                      {!isSuperAdmin && <th className="p-4">Amount Due</th>}
                       <th className="p-4 text-right">Verification Actions</th>
                     </tr>
                   </thead>
@@ -693,7 +707,7 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="p-4 text-primary font-bold">{pay.details}</td>
-                          <td className="p-4 font-heading text-sm font-bold text-foreground">${pay.amount}</td>
+                          {!isSuperAdmin && <td className="p-4 font-heading text-sm font-bold text-foreground">${pay.amount}</td>}
                           <td className="p-4 text-right">
                             {pay.status === "pending" ? (
                               <div className="flex items-center justify-end gap-2">
