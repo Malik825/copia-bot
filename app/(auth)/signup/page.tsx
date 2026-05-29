@@ -3,9 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiResponse, AuthSession } from "@/lib/types";
-import Navbar from "@/components/Navbar"; // Keep temporary or remove once fully replaced
-import { Shield, Key, Terminal, ArrowRight, Eye, EyeOff, UserPlus, ArrowLeft } from "lucide-react";
+import { ApiResponse } from "@/lib/types";
+import { Key, Terminal, ArrowRight, Eye, EyeOff, UserPlus, ArrowLeft, MailCheck } from "lucide-react";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -14,6 +13,7 @@ export default function SignUp() {
   const [telegramUsername, setTelegramUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [telemetryLogs, setTelemetryLogs] = useState<string[]>([
     "SYS_STATUS // LICENSE DISPATCH READY",
     "TLS_PORT   // SECURITY_ACTIVE_PORT_443",
@@ -36,23 +36,29 @@ export default function SignUp() {
         body: JSON.stringify({ email, password, telegramUsername }),
       });
 
-      const json: ApiResponse<AuthSession> = await res.json();
+      const json: ApiResponse<{ user: unknown; needsConfirmation: boolean }> = await res.json();
 
       if (json.success && json.data) {
-        setTelemetryLogs((prev) => [
-          ...prev,
-          "VAL_KEYS   // Unique signature mapped! ✓",
-          "SYS_GRANT  // Sandbox access generated! Mapped redirect...",
-        ]);
-        
-        // Cache session token
-        sessionStorage.setItem("token", json.data.token);
-        sessionStorage.setItem("user", JSON.stringify(json.data.user));
-        
-        // Redirect to admin console
-        setTimeout(() => {
-          router.push("/admin");
-        }, 1200);
+        if (json.data.needsConfirmation) {
+          // Email confirmation is enabled — show the confirmation message
+          setNeedsConfirmation(true);
+          setTelemetryLogs((prev) => [
+            ...prev,
+            "VAL_KEYS   // Unique signature mapped! ✓",
+            "MAIL_SEND  // Confirmation dispatch sent. Check inbox.",
+          ]);
+        } else {
+          // No confirmation needed — redirect immediately
+          setTelemetryLogs((prev) => [
+            ...prev,
+            "VAL_KEYS   // Unique signature mapped! ✓",
+            "SYS_GRANT  // Sandbox access generated! Mapped redirect...",
+          ]);
+          setTimeout(() => {
+            router.refresh();
+            router.push("/dashboard");
+          }, 1200);
+        }
       } else {
         setError(json.error || "Registration failed.");
         setTelemetryLogs((prev) => [
@@ -70,6 +76,75 @@ export default function SignUp() {
       setLoading(false);
     }
   };
+
+  // Email confirmation success screen
+  if (needsConfirmation) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center px-6 pt-28 pb-12 relative overflow-hidden font-sans">
+        <Link
+          href="/"
+          className="absolute top-6 left-6 font-mono text-[10px] tracking-[2px] uppercase text-muted-foreground hover:text-primary transition-all flex items-center gap-1.5 border border-border/60 bg-card/50 backdrop-blur-sm px-3 py-1.5 rounded-md hover:border-primary/50"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+        </Link>
+
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(201,168,76,0.02) 60px, rgba(201,168,76,0.02) 61px)",
+          }}
+        />
+
+        <div className="w-full max-w-md relative z-10 space-y-8">
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-green/10 border border-green/20 text-green mb-2">
+              <MailCheck className="w-7 h-7" />
+            </div>
+            <h2 className="font-heading text-3xl tracking-[3px] text-foreground font-bold uppercase">
+              Check Your <span className="text-green">Inbox</span>
+            </h2>
+            <p className="font-mono text-[10px] tracking-[1.5px] text-muted-foreground leading-relaxed max-w-xs mx-auto">
+              We sent a confirmation link to <span className="text-primary font-bold">{email}</span>. Click it to activate your console license.
+            </p>
+          </div>
+
+          <div className="bg-card border border-border p-8 rounded-xl relative shadow-lg backdrop-blur-xl dark:bg-black/50">
+            <span className="absolute -top-3.5 left-6 bg-card px-3 text-green text-[10px] font-mono uppercase tracking-[2.5px] border border-border rounded-md shadow-sm">
+              [ DISPATCH SENT ]
+            </span>
+
+            {/* Telemetry logs */}
+            <div className="border border-border/80 bg-black/40 p-4 rounded-lg flex flex-col font-mono text-[9px] leading-normal space-y-1.5 text-muted-foreground select-none">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/40">
+                <span className="text-primary font-bold flex items-center gap-1.5 uppercase tracking-widest text-[8px]">
+                  <Terminal className="w-3 h-3" /> Registration Status
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+              </div>
+              {telemetryLogs.map((log, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <span>&gt;</span>
+                  <span className={log.includes("✓") || log.includes("MAIL_SEND") ? "text-green font-bold" : ""}>
+                    {log}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link
+                href="/signin"
+                className="font-mono text-[10px] text-primary hover:underline font-bold tracking-[1.5px] uppercase"
+              >
+                Already confirmed? Sign In →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center px-6 pt-28 pb-12 relative overflow-hidden font-sans">

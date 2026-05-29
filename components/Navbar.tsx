@@ -4,14 +4,17 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, ArrowRight, BarChart2, LogOut, Sun, Moon } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [theme, setTheme] = useState("dark");
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
 
   // Scroll logic
   useEffect(() => {
@@ -22,11 +25,29 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Closes mobile menu on route change and checks auth status
+  // Closes mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
-    setIsLoggedIn(!!sessionStorage.getItem("token"));
   }, [pathname]);
+
+  // Auth State Listener
+  useEffect(() => {
+    // Initial check
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+      setIsAdmin(user?.email === "raedax77@gmail.com");
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+      setIsAdmin(session?.user?.email === "raedax77@gmail.com");
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   // Theme Sync logic on mount
   useEffect(() => {
@@ -54,9 +75,10 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.clear();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
+    router.refresh();
     router.push("/");
   };
 
@@ -64,7 +86,7 @@ export default function Navbar() {
     { name: "About", href: "/about" },
     { name: "Pricing", href: "/pricing" },
     { name: "Contact", href: "/contact" },
-    ...(isLoggedIn ? [{ name: "Dashboard", href: "/admin" }] : []),
+    ...(isLoggedIn ? [{ name: "Dashboard", href: isAdmin ? "/admin" : "/dashboard" }] : []),
   ];
 
   return (
@@ -81,9 +103,9 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link
               href="/"
-              className="flex items-center gap-2 font-heading text-xl tracking-[1px] text-primary hover:text-gold-light transition-all"
+              className="flex items-center gap-2.5 font-heading text-xl tracking-[1px] text-primary hover:text-gold-light transition-all"
             >
-              <BarChart2 className="h-5 w-5 text-primary" />
+              <img src="/Raedax.jpeg" alt="Raedax Logo" className="h-6 w-6 rounded-md object-cover border border-primary/20" />
               <span className="font-bold tracking-tight">TruFunder</span>
             </Link>
             

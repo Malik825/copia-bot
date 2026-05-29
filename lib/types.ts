@@ -32,10 +32,7 @@ export interface VerifiedTrader {
   avatar: string;
 }
 
-export interface AuthSession {
-  token: string;
-  user: UserProfile;
-}
+
 
 export interface ApiResponse<T> {
   success: boolean;

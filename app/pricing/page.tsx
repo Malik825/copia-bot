@@ -2,83 +2,43 @@
 
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
-import { Check, HelpCircle, ArrowRight, Zap, Shield, Sparkles, AlertCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { Check, HelpCircle, ArrowRight, Zap, Shield, Sparkles, AlertCircle, Copy, ExternalLink, Coins, QrCode, Wallet, DollarSign, CheckCircle2, Loader2, X } from "lucide-react";
 
 export default function Pricing() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"momo" | "crypto">("momo");
+  const [cryptoCurrency, setCryptoCurrency] = useState<"usdt" | "usdc" | "btc">("usdt");
+  const [senderNumber, setSenderNumber] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+  const [cryptoTxId, setCryptoTxId] = useState("");
+  const [isSubmittingMomo, setIsSubmittingMomo] = useState(false);
+  const [isSubmittingCrypto, setIsSubmittingCrypto] = useState(false);
+  const [momoSuccess, setMomoSuccess] = useState(false);
+  const [cryptoSuccess, setCryptoSuccess] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const plans = [
     {
-      name: "Sandbox",
-      description: "Test the mirror engine risk-free.",
-      priceMonthly: 0,
-      priceYearly: 0,
-      icon: Shield,
-      features: [
-        "Sandboxed mirror simulator",
-        "Up to 2 connected test exchanges",
-        "20x leverage safeguard cap",
-        "Default slippage cushion rules",
-        "Standard Telegram logs feed",
-      ],
-      cta: "Start Simulating",
-      popular: false,
-      badge: "Free Trial",
-    },
-    {
-      name: "Starter Router",
-      description: "Ideal for growing retail traders.",
-      priceMonthly: 29,
-      priceYearly: 22,
-      icon: Zap,
-      features: [
-        "Live execution on 1 exchange key",
-        "Full SMC order block filtering",
-        "Up to 50x leverage cap adjustment",
-        "15ms mirror routing latency",
-        "Email & Telegram bot alert support",
-      ],
-      cta: "Connect Starter Link",
-      popular: false,
-      badge: "Retail",
-    },
-    {
-      name: "Pro Router",
-      description: "Maximum efficiency and speed.",
-      priceMonthly: 79,
-      priceYearly: 59,
+      name: "Yearly Access Pass",
+      description: "Complete access to Elvis's Exness copy trading routing strategy.",
+      priceMonthly: 300,
+      priceYearly: 300,
       icon: Sparkles,
       features: [
-        "Live execution on up to 5 exchanges",
-        "Advanced custom AI Safeguard rules",
-        "Unlimited leverage capacity",
-        "12ms low-latency channels",
-        "Priority mirror execution",
-        "Dedicated account dashboard access",
+        "Full connection to Elvis's master strategy",
+        "Non-custodial API-based routing execution",
+        "SMC order block liquidity safeguards",
+        "Real-time Telegram signal log tracking",
+        "Dedicated onboarding support guide",
       ],
-      cta: "Go Professional",
+      cta: "Activate Yearly Pass",
       popular: true,
-      badge: "Most Popular",
-    },
-    {
-      name: "Enterprise",
-      description: "Institutional latency and capacity.",
-      priceMonthly: 199,
-      priceYearly: 149,
-      icon: AlertCircle,
-      features: [
-        "Unlimited connected exchange keys",
-        "VIP parallel websocket threads",
-        "8ms ultra-low-latency dedicated node",
-        "24/7 custom synthetic MT5 EA support",
-        "Direct institutional liquidity access",
-        "SLA mirror execution guarantees",
-      ],
-      cta: "Request Node Access",
-      popular: false,
-      badge: "Institutional",
-    },
+      badge: "50% OFF ACTIVE",
+    }
   ];
 
   const featuresMatrix = [
@@ -95,8 +55,8 @@ export default function Pricing() {
       a: "Our system mirrors signals in real-time through secure API connections. By creating API keys with withdrawal privileges disabled on your exchange settings, you make sure that our engine can only execute orders and can never access or withdraw your actual capital.",
     },
     {
-      q: "What is the difference between monthly and annual plans?",
-      a: "Our annual billing option provides a 25% discount across all paid subscription tiers, billed in a single recurring yearly payment.",
+      q: "What is included in the Yearly Access Pass?",
+      a: "The Yearly Access Pass grants you 12 full months of access to all automated trades executed on Elvis's strategy, along with step-by-step connection guides.",
     },
     {
       q: "Can I connect multiple MT5 accounts simultaneously?",
@@ -107,6 +67,45 @@ export default function Pricing() {
       a: "The Sandbox tier allows you to test the engine with zero capital risk using our paper-trading simulation. It caps leverage at 20x and includes default exposure safeguards to protect test account balances.",
     },
   ];
+
+  const handleCryptoCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    if (!selectedPlan || !cryptoTxId) return;
+    setIsSubmittingCrypto(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setErrorMessage("Please sign in to proceed with the payment.");
+        setTimeout(() => window.location.href = "/signin", 2000);
+        return;
+      }
+
+      const amount = billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly;
+      const { error } = await supabase.from("invoices").insert({
+        user_id: user.id,
+        plan_name: selectedPlan.name,
+        billing_cycle: billingCycle,
+        amount: amount,
+        status: "pending",
+        provider_id: "CRYPTO_TX:" + cryptoTxId,
+      });
+
+      if (error) {
+        console.error(error);
+        setErrorMessage("Failed to submit verification. Please try again.");
+      } else {
+        setCryptoSuccess(true);
+      }
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("An unexpected error occurred.");
+    } finally {
+      setIsSubmittingCrypto(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans">
@@ -137,144 +136,85 @@ export default function Pricing() {
           </h1>
           
           <p className="text-base font-light text-muted-foreground max-w-xl mx-auto leading-[1.8]">
-            Choose the routing bandwidth that matches your trading size. All accounts include our institutional AI Safeguard shield automatically.
+            Get absolute access to the Exness copying framework with our yearly plans.
           </p>
 
           {/* Sliding Billing Cycle Toggle */}
           <div className="flex items-center justify-center gap-4 pt-6">
-            <span className={`font-mono text-xs uppercase tracking-wider transition-colors ${billingCycle === "monthly" ? "text-foreground font-bold" : "text-muted-foreground"}`}>
-              Monthly
-            </span>
-
-            <button
-              onClick={() => setBillingCycle(billingCycle === "monthly" ? "yearly" : "monthly")}
-              className="relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-border transition-colors duration-200 ease-in-out outline-none"
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-primary shadow transition duration-200 ease-in-out ${
-                  billingCycle === "yearly" ? "translate-x-6" : "translate-x-0"
-                }`}
-              />
-            </button>
-
-            <span className={`font-mono text-xs uppercase tracking-wider transition-colors flex items-center gap-1.5 ${billingCycle === "yearly" ? "text-foreground font-bold" : "text-muted-foreground"}`}>
-              Yearly <span className="text-[9px] bg-green/10 text-green px-1.5 py-0.5 rounded-lg font-bold border border-green/20">SAVE 25%</span>
+            <span className={`font-mono text-xs uppercase tracking-wider transition-colors text-foreground font-bold`}>
+              Yearly Pass (50% Off Applied)
             </span>
           </div>
         </div>
       </section>
 
       {/* ── CARDS TIER GRID ── */}
-      <section className="py-12 px-6 md:px-12 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {plans.map((plan, idx) => {
-            const IconComponent = plan.icon;
-            const price = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
-            
-            return (
-              <div 
-                key={idx}
-                className={`border bg-card p-8 rounded-xl relative flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 shadow-sm ${
-                  plan.popular 
-                    ? "border-primary shadow-[0_8px_30px_rgba(201,168,76,0.08)]" 
-                    : "border-border hover:border-primary/45"
-                }`}
-              >
-                {/* Popular label badge */}
-                {plan.popular && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-mono text-[9px] tracking-[2px] font-bold px-3 py-1 rounded-full uppercase">
-                    {plan.badge}
-                  </span>
-                )}
+      <section className="py-12 px-6 md:px-12 max-w-xl mx-auto w-full">
+        {plans.map((plan, idx) => {
+          const IconComponent = plan.icon;
+          const price = billingCycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
+          
+          return (
+            <div 
+              key={idx}
+              className="border border-primary bg-card p-10 rounded-2xl relative flex flex-col justify-between transition-all duration-300 hover:scale-[1.01] shadow-[0_12px_40px_rgba(201,168,76,0.08)] bg-gradient-to-b from-card to-background/50"
+            >
+              {/* Popular label badge */}
+              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-mono text-[10px] tracking-[2.5px] font-bold px-4 py-1.5 rounded-full uppercase">
+                {plan.badge}
+              </span>
 
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 border border-border bg-background rounded-lg flex items-center justify-center text-primary">
-                      <IconComponent className="w-5 h-5" />
-                    </div>
-                    {!plan.popular && (
-                      <span className="font-mono text-[8px] tracking-wider text-muted-foreground border border-border px-2 py-0.5 rounded-lg uppercase">
-                        {plan.badge}
-                      </span>
-                    )}
+              <div>
+                <div className="flex items-center justify-between border-b border-border/40 pb-6">
+                  <div>
+                    <h3 className="font-heading text-3xl font-bold text-foreground tracking-wide">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs">
+                      {plan.description}
+                    </p>
                   </div>
-
-                  <h3 className="font-heading text-2xl font-bold text-foreground mt-5 tracking-wide">
-                    {plan.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                    {plan.description}
-                  </p>
-
-                  <div className="mt-6 flex items-baseline gap-1">
-                    <span className="font-heading text-4xl font-bold text-foreground">
-                      ${price}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      /{billingCycle === "monthly" ? "mo" : "yr"}
-                    </span>
+                  <div className="w-12 h-12 border border-primary/30 bg-primary/5 rounded-xl flex items-center justify-center text-primary shrink-0">
+                    <IconComponent className="w-6 h-6 animate-pulse" />
                   </div>
-
-                  <ul className="mt-8 space-y-3.5">
-                    {plan.features.map((feat, fIdx) => (
-                      <li key={fIdx} className="font-mono text-[10px] text-foreground/80 flex items-start gap-2.5 leading-relaxed">
-                        <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
 
-                <button
-                  className={`w-full mt-8 font-mono text-[10px] tracking-[2px] uppercase py-3 rounded-lg font-bold transition-all cursor-pointer outline-none ${
-                    plan.popular
-                      ? "bg-primary text-primary-foreground hover:bg-gold-light shadow-md"
-                      : "border border-border hover:border-primary hover:text-primary bg-background"
-                  }`}
-                >
-                  {plan.cta}
-                </button>
+                <div className="mt-8 flex items-baseline gap-2 justify-center py-4 bg-muted/10 rounded-xl border border-border/30">
+                  <span className="font-mono text-lg text-muted-foreground line-through opacity-50">$600</span>
+                  <span className="font-heading text-5xl font-bold text-foreground">
+                    ${price}
+                  </span>
+                  <span className="font-mono text-sm text-primary font-bold">
+                    /year
+                  </span>
+                </div>
+
+                <ul className="mt-8 space-y-4">
+                  {plan.features.map((feat, fIdx) => (
+                    <li key={fIdx} className="font-mono text-xs text-foreground/80 flex items-start gap-3 leading-relaxed">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            );
-          })}
-        </div>
-      </section>
 
-      {/* ── DETAILED COMPARISON MATRIX ── */}
-      <section className="py-16 px-6 md:px-12 max-w-5xl mx-auto w-full">
-        <div className="text-center mb-10">
-          <h2 className="font-heading text-3xl tracking-[1px] text-foreground font-bold uppercase">
-            Feature Comparison
-          </h2>
-          <p className="text-xs text-muted-foreground mt-2">
-            Detailed parameter overview across all copy routing plans.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto border border-border rounded-xl bg-card shadow-sm">
-          <table className="w-full text-left font-mono text-xs">
-            <thead>
-              <tr className="border-b border-border bg-background/50 text-[10px] text-muted-foreground uppercase tracking-wider">
-                <th className="p-4">Capability</th>
-                <th className="p-4">Sandbox</th>
-                <th className="p-4">Starter</th>
-                <th className="p-4 text-primary font-bold">Pro Router</th>
-                <th className="p-4">Enterprise</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {featuresMatrix.map((feat, fIdx) => (
-                <tr key={fIdx} className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 font-bold text-foreground">{feat.category}</td>
-                  <td className="p-4 text-muted-foreground">{feat.sandbox}</td>
-                  <td className="p-4 text-foreground/85">{feat.starter}</td>
-                  <td className="p-4 text-primary font-bold">{feat.pro}</td>
-                  <td className="p-4 text-foreground/85">{feat.enterprise}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              <button
+                onClick={() => {
+                  setSelectedPlan(plan);
+                  setPaymentMethod("momo");
+                  setMomoSuccess(false);
+                  setSenderNumber("");
+                  setTransactionId("");
+                  setErrorMessage(null);
+                }}
+                className="w-full mt-10 font-mono text-xs tracking-[2px] uppercase py-4 rounded-xl font-bold transition-all cursor-pointer outline-none bg-primary text-primary-foreground hover:bg-gold-light shadow-md border-0"
+              >
+                {plan.cta}
+              </button>
+            </div>
+          );
+        })}
       </section>
 
       {/* ── FAQ BLOCK ── */}
@@ -328,6 +268,381 @@ export default function Pricing() {
           © 2026 TruFunder · Trading involves risk · Not financial advice
         </div>
       </footer>
+
+      {/* ── CHECKOUT / PAYMENT MODAL ── */}
+      {selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/85 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-2xl bg-card border border-border rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-border flex items-center justify-between bg-muted/20">
+              <div>
+                <span className="font-mono text-[9px] tracking-[2px] text-primary uppercase font-bold border border-primary/30 px-2 py-0.5 rounded bg-primary/5">
+                  Secure Checkout
+                </span>
+                <h3 className="font-heading text-xl font-bold text-foreground mt-2">
+                  Upgrade to {selectedPlan.name}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedPlan(null)}
+                className="p-1.5 border border-border/80 bg-background hover:text-primary transition-all rounded-md cursor-pointer text-muted-foreground outline-none"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="mx-6 mt-6 p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg flex items-center gap-2 font-mono text-[11px] animate-in slide-in-from-top-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p>{errorMessage}</p>
+                <button onClick={() => setErrorMessage(null)} className="ml-auto opacity-70 hover:opacity-100 cursor-pointer outline-none">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* Modal Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              
+              {/* Order Summary Panel */}
+              <div className="p-4 rounded-lg bg-background border border-border/80 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="font-mono text-[10px] text-muted-foreground uppercase">Selected Plan</p>
+                  <p className="font-heading text-base font-bold text-foreground mt-0.5">{selectedPlan.name} Tier</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-[10px] text-muted-foreground uppercase">Amount Due</p>
+                  <p className="font-heading text-xl font-bold text-primary mt-0.5">
+                    ${billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly}
+                    <span className="font-mono text-xs text-muted-foreground font-light">
+                      /{billingCycle === "monthly" ? "mo" : "yr"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Payment Method Selector Tabs */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-background border border-border rounded-lg">
+                <button
+                  onClick={() => setPaymentMethod("momo")}
+                  className={`py-2.5 font-mono text-[11px] uppercase tracking-wider font-bold rounded-md transition-all cursor-pointer outline-none flex items-center justify-center gap-2 ${
+                    paymentMethod === "momo"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  <DollarSign className="w-3.5 h-3.5" /> Mobile Money (MoMo)
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("crypto")}
+                  className={`py-2.5 font-mono text-[11px] uppercase tracking-wider font-bold rounded-md transition-all cursor-pointer outline-none flex items-center justify-center gap-2 ${
+                    paymentMethod === "crypto"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  <Coins className="w-3.5 h-3.5" /> Crypto Payment
+                </button>
+              </div>
+
+              {/* Tab Contents */}
+              {paymentMethod === "momo" ? (
+                /* ── MOBILE MONEY TAB ── */
+                <div className="space-y-5">
+                  {momoSuccess ? (
+                    <div className="p-6 rounded-lg bg-green/5 border border-green/20 text-center space-y-4 py-8 animate-in zoom-in-95 duration-200">
+                      <div className="w-12 h-12 bg-green/10 border border-green/25 rounded-full flex items-center justify-center text-green mx-auto">
+                        <CheckCircle2 className="w-6 h-6 animate-bounce" />
+                      </div>
+                      <h4 className="font-heading text-lg font-bold text-foreground uppercase tracking-wide">
+                        Verification Request Submitted
+                      </h4>
+                      <p className="font-mono text-[11px] text-muted-foreground max-w-md mx-auto leading-relaxed">
+                        Our compliance system has logged your transaction (Ref: <span className="text-primary font-bold">{transactionId}</span>) for immediate ledger check. Your routing node access will be automatically unlocked within 10-15 minutes once confirmed.
+                      </p>
+                      <button
+                        onClick={() => setSelectedPlan(null)}
+                        className="font-mono text-[10px] tracking-[1.5px] uppercase border border-border hover:border-primary hover:text-primary px-6 py-2.5 rounded-lg bg-background font-bold transition-all cursor-pointer mt-4 outline-none"
+                      >
+                        Return to Pricing
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-3 font-mono text-[11px]">
+                        <div className="flex items-center justify-between text-muted-foreground pb-2 border-b border-border/40">
+                          <span className="uppercase">Merchant Account Details</span>
+                          <span className="text-primary">MTN MoMo / Multi-Network</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-muted-foreground">Merchant Name:</span>
+                          <span className="text-foreground font-bold font-sans">TRUFUNDER SYSTEMS LTD</span>
+                        </div>
+
+                        {/* Number Display with Copy */}
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-muted-foreground">Mobile Money Number:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground font-bold font-mono tracking-wider">+233 55 123 4567</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText("+233551234567");
+                                setCopiedField("number");
+                                setTimeout(() => setCopiedField(null), 2000);
+                              }}
+                              type="button"
+                              className="p-1 border border-border/80 bg-background hover:text-primary transition-all rounded hover:scale-105 cursor-pointer text-muted-foreground"
+                              title="Copy Number"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                            {copiedField === "number" && (
+                              <span className="text-[9px] text-green font-bold uppercase animate-fade-in">Copied!</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Dynamic Reference with Copy */}
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-muted-foreground">Payment Reference:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-primary font-bold font-mono">TF-{selectedPlan.name.toUpperCase().replace(/\s+/g, "")}-{(billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly)}</span>
+                            <button
+                              onClick={() => {
+                                const refStr = `TF-${selectedPlan.name.toUpperCase().replace(/\s+/g, "")}-${(billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly)}`;
+                                navigator.clipboard.writeText(refStr);
+                                setCopiedField("ref");
+                                setTimeout(() => setCopiedField(null), 2000);
+                              }}
+                              type="button"
+                              className="p-1 border border-border/80 bg-background hover:text-primary transition-all rounded hover:scale-105 cursor-pointer text-muted-foreground"
+                              title="Copy Reference"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                            {copiedField === "ref" && (
+                              <span className="text-[9px] text-green font-bold uppercase animate-fade-in">Copied!</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Instructions */}
+                      <div className="space-y-2">
+                        <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-wider">How to Complete Your MoMo Payment:</h4>
+                        <ol className="font-mono text-[10px] text-muted-foreground space-y-1.5 list-decimal pl-4 leading-relaxed">
+                          <li>Send the exact USD equivalent amount in your local currency to the MoMo number above.</li>
+                          <li>Ensure you enter the **Payment Reference** in the payment reason/reference box.</li>
+                          <li>Once the money transfer is complete, submit your details below to activate your account.</li>
+                        </ol>
+                      </div>
+
+                      {/* Verification Form */}
+                      <form 
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          setErrorMessage(null);
+                          if (!senderNumber || !transactionId) return;
+                          setIsSubmittingMomo(true);
+                          
+                          try {
+                            const supabase = createClient();
+                            const { data: { user } } = await supabase.auth.getUser();
+                            
+                            if (!user) {
+                              setErrorMessage("Please sign in to proceed with the payment.");
+                              setTimeout(() => window.location.href = "/signin", 2000);
+                              return;
+                            }
+
+                            const amount = billingCycle === "monthly" ? selectedPlan.priceMonthly : selectedPlan.priceYearly;
+                            const { error } = await supabase.from("invoices").insert({
+                              user_id: user.id,
+                              plan_name: selectedPlan.name,
+                              billing_cycle: billingCycle,
+                              amount: amount,
+                              status: "pending",
+                              provider_id: "MOMO_TX:" + transactionId + "_NUM:" + senderNumber,
+                            });
+
+                            if (error) {
+                              console.error(error);
+                              setErrorMessage("Failed to submit verification. Please try again.");
+                            } else {
+                              setMomoSuccess(true);
+                            }
+                          } catch (error) {
+                            console.error(error);
+                            setErrorMessage("An unexpected error occurred.");
+                          } finally {
+                            setIsSubmittingMomo(false);
+                          }
+                        }}
+                        className="space-y-4 pt-2 border-t border-border/40"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground block">Your MoMo Number</label>
+                            <input
+                              type="text"
+                              required
+                              value={senderNumber}
+                              onChange={(e) => setSenderNumber(e.target.value)}
+                              placeholder="e.g. +233 24 000 0000"
+                              className="w-full bg-background border border-border/85 rounded-lg px-3 py-2 text-xs font-mono focus:border-primary focus:outline-none transition-colors text-foreground"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground block">Transaction ID / TxID</label>
+                            <input
+                              type="text"
+                              required
+                              value={transactionId}
+                              onChange={(e) => setTransactionId(e.target.value)}
+                              placeholder="e.g. 58392019482"
+                              className="w-full bg-background border border-border/85 rounded-lg px-3 py-2 text-xs font-mono focus:border-primary focus:outline-none transition-colors text-foreground"
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmittingMomo || !senderNumber || !transactionId}
+                          className="w-full font-mono text-[10px] tracking-[2px] uppercase py-3 rounded-lg font-bold transition-all bg-primary text-primary-foreground hover:bg-gold-light shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none border-0"
+                        >
+                          {isSubmittingMomo ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Verifying Ledger...
+                            </>
+                          ) : (
+                            "Submit for Activation"
+                          )}
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* ── CRYPTO PAYMENT TAB (NOWPAYMENTS) ── */
+                <div className="space-y-6 animate-in fade-in duration-200">
+                  {cryptoSuccess ? (
+                    <div className="p-6 rounded-lg bg-green/5 border border-green/20 text-center space-y-4 py-8 animate-in zoom-in-95 duration-200">
+                      <div className="w-12 h-12 bg-green/10 border border-green/25 rounded-full flex items-center justify-center text-green mx-auto">
+                        <CheckCircle2 className="w-6 h-6 animate-bounce" />
+                      </div>
+                      <h4 className="font-heading text-lg font-bold text-foreground uppercase tracking-wide">
+                        Crypto Verification Submitted
+                      </h4>
+                      <p className="font-mono text-[11px] text-muted-foreground max-w-md mx-auto leading-relaxed">
+                        Our system has logged your transaction (TxID: <span className="text-primary font-bold">{cryptoTxId}</span>) for on-chain verification. Your routing node access will be automatically unlocked once confirmed.
+                      </p>
+                      <button
+                        onClick={() => setSelectedPlan(null)}
+                        className="font-mono text-[10px] tracking-[1.5px] uppercase border border-border hover:border-primary hover:text-primary px-6 py-2.5 rounded-lg bg-background font-bold transition-all cursor-pointer mt-4 outline-none"
+                      >
+                        Return to Pricing
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-6 rounded-lg bg-background border border-border flex flex-col space-y-4">
+                      <div className="flex flex-col items-center justify-center text-center mb-2">
+                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 mb-4">
+                          <Wallet className="w-8 h-8 text-primary" />
+                        </div>
+                        <h4 className="font-heading text-lg font-bold text-foreground">
+                          Pay securely with USDT (TRC20)
+                        </h4>
+                        <p className="font-mono text-[11px] text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">
+                          Please send the exact USD amount to the wallet address below. Once sent, provide the Transaction Hash (TxID) to verify your payment.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-3 font-mono text-[11px]">
+                        <div className="flex items-center justify-between text-muted-foreground pb-2 border-b border-border/40">
+                          <span className="uppercase">Network</span>
+                          <span className="text-primary font-bold">TRON (TRC20)</span>
+                        </div>
+                        <div className="flex flex-col gap-2 py-1">
+                          <span className="text-muted-foreground">USDT Deposit Address:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground font-bold font-mono tracking-wider break-all text-[10px]">Txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText("Txxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                                setCopiedField("crypto_addr");
+                                setTimeout(() => setCopiedField(null), 2000);
+                              }}
+                              type="button"
+                              className="p-1 border border-border/80 bg-background hover:text-primary transition-all rounded hover:scale-105 cursor-pointer text-muted-foreground shrink-0"
+                              title="Copy Address"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                            {copiedField === "crypto_addr" && (
+                              <span className="text-[9px] text-green font-bold uppercase animate-fade-in shrink-0">Copied!</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <form onSubmit={handleCryptoCheckout} className="space-y-4 pt-4 border-t border-border/40">
+                        <div className="space-y-1">
+                          <label className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground block">Transaction Hash (TxID)</label>
+                          <input
+                            type="text"
+                            required
+                            value={cryptoTxId}
+                            onChange={(e) => setCryptoTxId(e.target.value)}
+                            placeholder="e.g. 8a9b23..."
+                            className="w-full bg-background border border-border/85 rounded-lg px-3 py-2 text-xs font-mono focus:border-primary focus:outline-none transition-colors text-foreground"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isSubmittingCrypto || !cryptoTxId}
+                          className="w-full font-mono text-[10px] tracking-[2px] uppercase py-3.5 rounded-lg font-bold transition-all bg-primary text-primary-foreground hover:bg-gold-light shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed outline-none border-0 mt-4"
+                        >
+                          {isSubmittingCrypto ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" /> Verifying On-Chain...
+                            </>
+                          ) : (
+                            <>
+                              <Coins className="w-4 h-4" /> Submit Payment Hash
+                            </>
+                          )}
+                        </button>
+                      </form>
+                      
+                      <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-2 w-full justify-center opacity-80">
+                        <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green" /> Automated Check</span>
+                        <span className="flex items-center gap-1"><Shield className="w-3 h-3 text-primary" /> Encrypted</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-muted/20 flex items-center justify-between text-right">
+              <span className="font-mono text-[9px] text-muted-foreground uppercase flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" /> SSL 256-Bit Encrypted Routing
+              </span>
+              <button
+                onClick={() => setSelectedPlan(null)}
+                className="font-mono text-[10px] tracking-[1px] uppercase bg-background border border-border hover:border-foreground text-foreground px-4 py-2 rounded font-bold transition-all cursor-pointer outline-none"
+              >
+                Close Window
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

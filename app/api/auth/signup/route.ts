@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { ApiResponse, AuthSession } from "@/lib/types";
+import { createClient } from "@/lib/supabase/server";
+import { ApiResponse } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
@@ -19,19 +20,33 @@ export async function POST(request: Request) {
       );
     }
 
-    const session: AuthSession = {
-      token: "mock-jwt-token-" + Math.random().toString(36).substring(2),
-      user: {
-        id: "usr-" + Math.random().toString(36).substring(2, 9),
-        email: email,
-        telegramUsername: telegramUsername || undefined,
-        createdAt: new Date().toISOString(),
-      },
-    };
+    const supabase = await createClient();
 
-    return NextResponse.json<ApiResponse<AuthSession>>({
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          telegram_username: telegramUsername || undefined,
+        },
+      },
+    });
+
+    if (error) {
+      return NextResponse.json<ApiResponse<null>>(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
+    }
+
+    // If email confirmation is enabled in Supabase, data.session will be null
+    // until the user confirms. We return the user either way.
+    return NextResponse.json<ApiResponse<{ user: typeof data.user; needsConfirmation: boolean }>>({
       success: true,
-      data: session,
+      data: {
+        user: data.user,
+        needsConfirmation: !data.session,
+      },
     });
   } catch (error) {
     return NextResponse.json<ApiResponse<null>>(

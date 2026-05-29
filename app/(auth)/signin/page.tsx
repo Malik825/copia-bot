@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiResponse, AuthSession } from "@/lib/types";
-import Navbar from "@/components/Navbar"; // Keep temporary or remove once fully replaced
+import { ApiResponse } from "@/lib/types";
 import { Shield, Key, Terminal, ArrowRight, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function SignIn() {
@@ -35,7 +34,7 @@ export default function SignIn() {
         body: JSON.stringify({ email, password }),
       });
 
-      const json: ApiResponse<AuthSession> = await res.json();
+      const json: ApiResponse<{ user: unknown }> = await res.json();
 
       if (json.success && json.data) {
         setTelemetryLogs((prev) => [
@@ -43,14 +42,22 @@ export default function SignIn() {
           "DECRYPT    // Decrypted session telemetry ✓",
           "SYS_GRANT  // Permission node mapped! Redirecting...",
         ]);
-        
-        // Cache session token
-        sessionStorage.setItem("token", json.data.token);
-        sessionStorage.setItem("user", JSON.stringify(json.data.user));
-        
-        // Redirect to admin console
+
+        // Set role-based session states
+        if (email.toLowerCase() === "raedax77@gmail.com") {
+          sessionStorage.setItem("admin_email", "raedax77@gmail.com");
+          sessionStorage.setItem("admin_token", "admin-session-verified");
+        }
+
+        // Supabase session is stored in cookies automatically.
+        // Refresh the router so middleware picks up the new session.
         setTimeout(() => {
-          router.push("/admin");
+          router.refresh();
+          if (email.toLowerCase() === "raedax77@gmail.com") {
+            router.push("/admin");
+          } else {
+            router.push("/dashboard");
+          }
         }, 1200);
       } else {
         setError(json.error || "Authentication failed.");

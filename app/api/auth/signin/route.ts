@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { ApiResponse, AuthSession } from "@/lib/types";
+import { createClient } from "@/lib/supabase/server";
+import { ApiResponse } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
@@ -12,27 +13,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mock validation
-    if (password.length < 6) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
       return NextResponse.json<ApiResponse<null>>(
-        { success: false, error: "Invalid credentials. Password must be at least 6 characters." },
+        { success: false, error: error.message },
         { status: 401 }
       );
     }
 
-    const session: AuthSession = {
-      token: "mock-jwt-token-" + Math.random().toString(36).substring(2),
-      user: {
-        id: "usr-" + Math.random().toString(36).substring(2, 9),
-        email: email,
-        telegramUsername: "trader_pro",
-        createdAt: new Date().toISOString(),
-      },
-    };
-
-    return NextResponse.json<ApiResponse<AuthSession>>({
+    return NextResponse.json<ApiResponse<{ user: typeof data.user }>>({
       success: true,
-      data: session,
+      data: { user: data.user },
     });
   } catch (error) {
     return NextResponse.json<ApiResponse<null>>(
