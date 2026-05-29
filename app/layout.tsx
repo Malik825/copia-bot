@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TruFunder — Automated Trading. Three Markets. One Edge.",
+  title: "Raedax — Automated Trading. Three Markets. One Edge.",
   description:
     "Forex, Crypto Futures, and Synthetic Indices — fully automated, signal-driven execution across multiple exchanges and platforms simultaneously.",
   icons: {

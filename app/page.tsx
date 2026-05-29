@@ -522,10 +522,10 @@ export default function Home() {
       {/* ── FOOTER ── */}
       <footer className="border-t border-border px-6 md:px-12 py-9 flex items-center justify-between flex-wrap gap-4">
         <div className="font-heading text-lg tracking-[3px] text-primary">
-          TRUFUNDER
+          RAEDAX
         </div>
         <div className="font-mono text-[10px] tracking-[1px] text-muted-foreground">
-          © 2026 TruFunder · Trading involves risk · Not financial advice
+          © 2026 Raedax · Trading involves risk · Not financial advice
         </div>
       </footer>
     </>
